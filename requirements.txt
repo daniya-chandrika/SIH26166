@@ -7,7 +7,7 @@ pillow>=10.0.0
 lxml>=4.9.0
 
 # Computer Vision, Scientific Image Processing & Visualization
-opencv-python>=4.8.0
+opencv-python-headless>=4.8.0
 scipy>=1.11.0
 matplotlib>=3.7.0
 
