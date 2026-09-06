@@ -1,0 +1,514 @@
+{
+  "manifest_version": "1.0.0",
+  "generated_at": "2026-09-05T05:13:01.500810Z",
+  "summary": {
+    "total_archives": 4,
+    "total_products": 4,
+    "sensors": [
+      "IIRS",
+      "TMC-2",
+      "LROC",
+      "OHRC"
+    ],
+    "total_scientific_rasters": 4,
+    "total_metadata_files": 5,
+    "total_browse_images": 4,
+    "total_auxiliary_files": 1
+  },
+  "archives": [
+    {
+      "sensor": "OHRC",
+      "archive_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\tests\\sample_data\\ch2_ohrc_orbital_product.zip",
+      "archive_sha256": "037fb26e6150b6055ddacccb64be7f8473de64e74e7d3012f314d1938d8ee252",
+      "extract_dir": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product",
+      "is_valid": true,
+      "total_files": 4,
+      "scientific_images_count": 1,
+      "metadata_files_count": 1,
+      "browse_images_count": 1,
+      "auxiliary_files_count": 1,
+      "files": [
+        {
+          "relative_path": "auxiliary/orbit_geometry_ephem.tab",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\auxiliary\\orbit_geometry_ephem.tab",
+          "filename": "orbit_geometry_ephem.tab",
+          "extension": ".tab",
+          "file_size_bytes": 72,
+          "category": "AUXILIARY",
+          "mime_type": null,
+          "extra": {
+            "sha256": "06027057e56e57d5d7304a487a38dbc93ab8c124f5e0d6bbae632db71bfbc634"
+          }
+        },
+        {
+          "relative_path": "browse/ch2_ohrc_20230815_sc23_browse.jpg",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\browse\\ch2_ohrc_20230815_sc23_browse.jpg",
+          "filename": "ch2_ohrc_20230815_sc23_browse.jpg",
+          "extension": ".jpg",
+          "file_size_bytes": 30064,
+          "category": "BROWSE_IMAGE",
+          "mime_type": "image/jpeg",
+          "extra": {
+            "sha256": "17bede1db8baa271787cc26ce159bcc28e03b3a2feee50809149dcd8154a9849"
+          }
+        },
+        {
+          "relative_path": "data/ch2_ohrc_20230815_sc23.tif",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\data\\ch2_ohrc_20230815_sc23.tif",
+          "filename": "ch2_ohrc_20230815_sc23.tif",
+          "extension": ".tif",
+          "file_size_bytes": 524506,
+          "category": "SCIENTIFIC_IMAGE",
+          "mime_type": "image/tiff",
+          "extra": {
+            "sha256": "a8f6357b2f2ca5533e2cacf4620e23ac54338c23d7e6ba6fb52a86f0534861f2"
+          }
+        },
+        {
+          "relative_path": "metadata/ch2_ohrc_20230815_sc23.xml",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\metadata\\ch2_ohrc_20230815_sc23.xml",
+          "filename": "ch2_ohrc_20230815_sc23.xml",
+          "extension": ".xml",
+          "file_size_bytes": 3315,
+          "category": "METADATA",
+          "mime_type": "text/xml",
+          "extra": {
+            "sha256": "ab839e916656418374a510d179612122e97647466b57465c1c937dd14cf3d317"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "sensor": "TMC-2",
+      "archive_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\tests\\sample_data\\ch2_tmc2_orbital_product.zip",
+      "archive_sha256": "0c1ae6dfaaef42f34795f17705c2a969a2b756fe4943174ceb967651e59ec6ad",
+      "extract_dir": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product",
+      "is_valid": true,
+      "total_files": 3,
+      "scientific_images_count": 1,
+      "metadata_files_count": 1,
+      "browse_images_count": 1,
+      "auxiliary_files_count": 0,
+      "files": [
+        {
+          "relative_path": "browse/ch2_tmc2_triplet_thumb.png",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product\\browse\\ch2_tmc2_triplet_thumb.png",
+          "filename": "ch2_tmc2_triplet_thumb.png",
+          "extension": ".png",
+          "file_size_bytes": 172145,
+          "category": "BROWSE_IMAGE",
+          "mime_type": "image/png",
+          "extra": {
+            "sha256": "091d3ed831439f10e08bc43cfa049e973fa0b728891b05540dd3f85ffc696931"
+          }
+        },
+        {
+          "relative_path": "data/ch2_tmc2_triplet_nadir.tif",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product\\data\\ch2_tmc2_triplet_nadir.tif",
+          "filename": "ch2_tmc2_triplet_nadir.tif",
+          "extension": ".tif",
+          "file_size_bytes": 524506,
+          "category": "SCIENTIFIC_IMAGE",
+          "mime_type": "image/tiff",
+          "extra": {
+            "sha256": "32bbdf83021348cdb8e6b68047d25591e55a447e28663e90985e579c232bfd78"
+          }
+        },
+        {
+          "relative_path": "metadata/ch2_tmc2_triplet_nadir.xml",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product\\metadata\\ch2_tmc2_triplet_nadir.xml",
+          "filename": "ch2_tmc2_triplet_nadir.xml",
+          "extension": ".xml",
+          "file_size_bytes": 2632,
+          "category": "METADATA",
+          "mime_type": "text/xml",
+          "extra": {
+            "sha256": "8475f751dc6a2f10423d51d52d339243e3504ecce17e235f2623c0d761b7074f"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "sensor": "IIRS",
+      "archive_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\tests\\sample_data\\ch2_iirs_orbital_product.zip",
+      "archive_sha256": "3a5e05adae02fd29749b91742f205c6b10118c642aaff4c442467f797e07684b",
+      "extract_dir": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product",
+      "is_valid": true,
+      "total_files": 4,
+      "scientific_images_count": 1,
+      "metadata_files_count": 2,
+      "browse_images_count": 1,
+      "auxiliary_files_count": 0,
+      "files": [
+        {
+          "relative_path": "browse/ch2_iirs_band_preview.png",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\browse\\ch2_iirs_band_preview.png",
+          "filename": "ch2_iirs_band_preview.png",
+          "extension": ".png",
+          "file_size_bytes": 172145,
+          "category": "BROWSE_IMAGE",
+          "mime_type": "image/png",
+          "extra": {
+            "sha256": "091d3ed831439f10e08bc43cfa049e973fa0b728891b05540dd3f85ffc696931"
+          }
+        },
+        {
+          "relative_path": "data/ch2_iirs_hyperspectral_cube.dat",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\data\\ch2_iirs_hyperspectral_cube.dat",
+          "filename": "ch2_iirs_hyperspectral_cube.dat",
+          "extension": ".dat",
+          "file_size_bytes": 131072,
+          "category": "SCIENTIFIC_IMAGE",
+          "mime_type": null,
+          "extra": {
+            "sha256": "198945565dac4bc9f2cbff6de231a3dfc492fa4ba3fe7b4795d7db19dbac8d64"
+          }
+        },
+        {
+          "relative_path": "data/ch2_iirs_hyperspectral_cube.hdr",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\data\\ch2_iirs_hyperspectral_cube.hdr",
+          "filename": "ch2_iirs_hyperspectral_cube.hdr",
+          "extension": ".hdr",
+          "file_size_bytes": 489,
+          "category": "METADATA",
+          "mime_type": null,
+          "extra": {
+            "sha256": "37671315a27ebf410f7a5c7b11c584a943e25846bd8623f3952253b5c52e11a2"
+          }
+        },
+        {
+          "relative_path": "metadata/ch2_iirs_hyperspectral_cube.xml",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\metadata\\ch2_iirs_hyperspectral_cube.xml",
+          "filename": "ch2_iirs_hyperspectral_cube.xml",
+          "extension": ".xml",
+          "file_size_bytes": 2649,
+          "category": "METADATA",
+          "mime_type": "text/xml",
+          "extra": {
+            "sha256": "ab72586f66741c2f1f1d3a88987ef201346f124d7db456d840290979231d3d99"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "sensor": "LROC",
+      "archive_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\tests\\sample_data\\lroc_nac_reference_product.zip",
+      "archive_sha256": "da3a55f194707dd75a8c8abab9268ee7d354c6e9626d39d19cbaebfea6a60924",
+      "extract_dir": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product",
+      "is_valid": true,
+      "total_files": 3,
+      "scientific_images_count": 1,
+      "metadata_files_count": 1,
+      "browse_images_count": 1,
+      "auxiliary_files_count": 0,
+      "files": [
+        {
+          "relative_path": "browse/m1142442434re_browse.jpg",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product\\browse\\m1142442434re_browse.jpg",
+          "filename": "m1142442434re_browse.jpg",
+          "extension": ".jpg",
+          "file_size_bytes": 30069,
+          "category": "BROWSE_IMAGE",
+          "mime_type": "image/jpeg",
+          "extra": {
+            "sha256": "ab70f935654a5582350ec55253cdb3f2a4bb139a183c82237f3aad18af8225a9"
+          }
+        },
+        {
+          "relative_path": "data/m1142442434re_lroc_nac.tif",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product\\data\\m1142442434re_lroc_nac.tif",
+          "filename": "m1142442434re_lroc_nac.tif",
+          "extension": ".tif",
+          "file_size_bytes": 262362,
+          "category": "SCIENTIFIC_IMAGE",
+          "mime_type": "image/tiff",
+          "extra": {
+            "sha256": "5208748077b77108639fce157fbaa1ea512824561b91088f517a0101612f8129"
+          }
+        },
+        {
+          "relative_path": "metadata/m1142442434re_lroc_nac.lbl",
+          "absolute_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product\\metadata\\m1142442434re_lroc_nac.lbl",
+          "filename": "m1142442434re_lroc_nac.lbl",
+          "extension": ".lbl",
+          "file_size_bytes": 2110,
+          "category": "METADATA",
+          "mime_type": null,
+          "extra": {
+            "sha256": "25bbee6eb863396ea94aac572fe1aaae9a9e41f4af8c2d274b4e7438b8ee5ac8"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "products": [
+    {
+      "image_id": "ch2_ohrc_20230815_sc23",
+      "product_id": "urn:isro:ch2:ohrc:data:ch2_ohrc_20230815_sc23",
+      "sensor": "OHRC",
+      "filename": "ch2_ohrc_20230815_sc23.tif",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\data\\ch2_ohrc_20230815_sc23.tif",
+      "format": "GeoTIFF",
+      "product_level": "Calibrated",
+      "mission": "Chandrayaan-2",
+      "width": 512,
+      "height": 512,
+      "bit_depth": 16,
+      "number_of_bands": 1,
+      "spatial_resolution": 0.25,
+      "latitude": -70.925,
+      "longitude": 22.845,
+      "bounding_box": {
+        "min_latitude": -71.0,
+        "max_latitude": -70.85,
+        "min_longitude": 22.75,
+        "max_longitude": 22.94
+      },
+      "footprint": "POLYGON((22.75 -71.0, 22.94 -71.0, 22.94 -70.85, 22.75 -70.85, 22.75 -71.0))",
+      "footprint_geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.75,
+              -71.0
+            ],
+            [
+              22.94,
+              -71.0
+            ],
+            [
+              22.94,
+              -70.85
+            ],
+            [
+              22.75,
+              -70.85
+            ],
+            [
+              22.75,
+              -71.0
+            ]
+          ]
+        ]
+      },
+      "acquisition_date": "2023-08-15",
+      "acquisition_time": "06:12:45.120",
+      "start_time_utc": "2023-08-15T06:12:45.120Z",
+      "stop_time_utc": "2023-08-15T06:14:15.840Z",
+      "sun_elevation": 47.5,
+      "sun_azimuth": 112.45,
+      "incidence_angle": 42.5,
+      "emission_angle": 3.2,
+      "phase_angle": 40.1,
+      "look_angle": 2.1,
+      "projection": "Equirectangular",
+      "crs": "Moon_2000",
+      "datum": "Moon_2000",
+      "raw_metadata": {},
+      "source_label_file": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\metadata\\ch2_ohrc_20230815_sc23.xml"
+    },
+    {
+      "image_id": "ch2_tmc2_triplet_nadir",
+      "product_id": "urn:isro:ch2:tmc2:data:ch2_tmc2_triplet_nadir",
+      "sensor": "TMC-2",
+      "filename": "ch2_tmc2_triplet_nadir.tif",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product\\data\\ch2_tmc2_triplet_nadir.tif",
+      "format": "GeoTIFF",
+      "product_level": "L2_Derived_DEM",
+      "mission": "Chandrayaan-2",
+      "width": 512,
+      "height": 512,
+      "bit_depth": 16,
+      "number_of_bands": 1,
+      "spatial_resolution": 5.0,
+      "latitude": -70.92,
+      "longitude": 22.84,
+      "bounding_box": {
+        "min_latitude": -71.04,
+        "max_latitude": -70.8,
+        "min_longitude": 22.7,
+        "max_longitude": 22.98
+      },
+      "footprint": "POLYGON((22.7 -71.04, 22.98 -71.04, 22.98 -70.8, 22.7 -70.8, 22.7 -71.04))",
+      "footprint_geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.7,
+              -71.04
+            ],
+            [
+              22.98,
+              -71.04
+            ],
+            [
+              22.98,
+              -70.8
+            ],
+            [
+              22.7,
+              -70.8
+            ],
+            [
+              22.7,
+              -71.04
+            ]
+          ]
+        ]
+      },
+      "acquisition_date": "2023-08-15",
+      "acquisition_time": "06:11:30.000",
+      "start_time_utc": "2023-08-15T06:11:30.000Z",
+      "stop_time_utc": "2023-08-15T06:15:30.000Z",
+      "sun_elevation": 51.8,
+      "sun_azimuth": 110.1,
+      "incidence_angle": 38.2,
+      "emission_angle": 12.0,
+      "phase_angle": 36.5,
+      "look_angle": null,
+      "projection": "Equirectangular",
+      "crs": "Moon_2000",
+      "datum": "Moon_2000",
+      "raw_metadata": {},
+      "source_label_file": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product\\metadata\\ch2_tmc2_triplet_nadir.xml"
+    },
+    {
+      "image_id": "ch2_iirs_hyperspectral_cube",
+      "product_id": "urn:isro:ch2:iirs:data:ch2_iirs_hyperspectral_cube",
+      "sensor": "IIRS",
+      "filename": "ch2_iirs_hyperspectral_cube.dat",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\data\\ch2_iirs_hyperspectral_cube.dat",
+      "format": "DAT",
+      "product_level": "Calibrated_Spectra",
+      "mission": "Chandrayaan-2",
+      "width": 64,
+      "height": 64,
+      "bit_depth": 16,
+      "number_of_bands": 16,
+      "spatial_resolution": 80.0,
+      "latitude": -70.9,
+      "longitude": 22.8,
+      "bounding_box": {
+        "min_latitude": -71.05,
+        "max_latitude": -70.75,
+        "min_longitude": 22.6,
+        "max_longitude": 23.0
+      },
+      "footprint": "POLYGON((22.6 -71.05, 23.0 -71.05, 23.0 -70.75, 22.6 -70.75, 22.6 -71.05))",
+      "footprint_geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.6,
+              -71.05
+            ],
+            [
+              23.0,
+              -71.05
+            ],
+            [
+              23.0,
+              -70.75
+            ],
+            [
+              22.6,
+              -70.75
+            ],
+            [
+              22.6,
+              -71.05
+            ]
+          ]
+        ]
+      },
+      "acquisition_date": "2023-08-15",
+      "acquisition_time": "06:10:00.000",
+      "start_time_utc": "2023-08-15T06:10:00.000Z",
+      "stop_time_utc": "2023-08-15T06:16:00.000Z",
+      "sun_elevation": 45.0,
+      "sun_azimuth": 115.0,
+      "incidence_angle": 45.0,
+      "emission_angle": 0.5,
+      "phase_angle": 44.8,
+      "look_angle": null,
+      "projection": "Equirectangular",
+      "crs": "Moon_2000_Equirectangular",
+      "datum": "Moon_2000",
+      "raw_metadata": {},
+      "source_label_file": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\data\\ch2_iirs_hyperspectral_cube.hdr, C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\metadata\\ch2_iirs_hyperspectral_cube.xml"
+    },
+    {
+      "image_id": "m1142442434re_lroc_nac",
+      "product_id": "M1142442434RE",
+      "sensor": "LROC",
+      "filename": "m1142442434re_lroc_nac.tif",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product\\data\\m1142442434re_lroc_nac.tif",
+      "format": "GeoTIFF",
+      "product_level": "CDR",
+      "mission": "LRO",
+      "width": 512,
+      "height": 512,
+      "bit_depth": 8,
+      "number_of_bands": 1,
+      "spatial_resolution": 0.5,
+      "latitude": -70.92,
+      "longitude": 22.82,
+      "bounding_box": {
+        "min_latitude": -71.02,
+        "max_latitude": -70.82,
+        "min_longitude": 22.72,
+        "max_longitude": 22.92
+      },
+      "footprint": "POLYGON((22.72 -71.02, 22.92 -71.02, 22.92 -70.82, 22.72 -70.82, 22.72 -71.02))",
+      "footprint_geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.72,
+              -71.02
+            ],
+            [
+              22.92,
+              -71.02
+            ],
+            [
+              22.92,
+              -70.82
+            ],
+            [
+              22.72,
+              -70.82
+            ],
+            [
+              22.72,
+              -71.02
+            ]
+          ]
+        ]
+      },
+      "acquisition_date": "2023-08-15",
+      "acquisition_time": "06:12:00.000",
+      "start_time_utc": "2023-08-15T06:12:00.000Z",
+      "stop_time_utc": "2023-08-15T06:13:30.000Z",
+      "sun_elevation": 44.7,
+      "sun_azimuth": 114.2,
+      "incidence_angle": 45.3,
+      "emission_angle": 4.1,
+      "phase_angle": 42.1,
+      "look_angle": 3.8,
+      "projection": "EQUIRECTANGULAR",
+      "crs": "MOON_2000",
+      "datum": "MOON",
+      "raw_metadata": {},
+      "source_label_file": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product\\metadata\\m1142442434re_lroc_nac.lbl"
+    }
+  ]
+}

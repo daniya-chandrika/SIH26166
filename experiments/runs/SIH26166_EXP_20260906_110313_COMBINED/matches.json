@@ -1,0 +1,9 @@
+{
+  "raw_matches": 576,
+  "confidence_filtered": 576,
+  "spatial_selected": 217,
+  "inliers": 193,
+  "occupied_cells": 50,
+  "total_cells": 64,
+  "coverage_pct": 78.125
+}

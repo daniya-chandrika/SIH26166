@@ -1,0 +1,5 @@
+image_id,product_id,sensor,status,quality_score,is_corrupted,is_readable,is_blank,has_invalid_values,nodata_pct,saturation_pct,mean_dn,std_dn,min_dn,max_dn,missing_coords,missing_angles,missing_res,missing_time,issue_count,issues_summary
+ch2_ohrc_20230815_sc23,urn:isro:ch2:ohrc:data:ch2_ohrc_20230815_sc23,OHRC,PASS,1.0,False,True,False,False,0.0,0.0,11444.05,2757.37,1507.0,31559.0,False,False,False,False,0,None
+ch2_tmc2_triplet_nadir,urn:isro:ch2:tmc2:data:ch2_tmc2_triplet_nadir,TMC-2,PASS,1.0,False,True,False,False,0.0,0.0,11444.05,2757.37,1507.0,31559.0,False,False,False,False,0,None
+ch2_iirs_hyperspectral_cube,urn:isro:ch2:iirs:data:ch2_iirs_hyperspectral_cube,IIRS,PASS,1.0,False,True,False,False,0.0,0.0,,,,,False,False,False,False,0,None
+m1142442434re_lroc_nac,M1142442434RE,LROC,PASS,1.0,False,True,False,False,0.0,0.0,44.2,10.77,10.0,123.0,False,False,False,False,0,None

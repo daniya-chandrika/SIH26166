@@ -1,0 +1,14 @@
+====================================================
+SIH26166 REGISTRATION PROTOTYPE
+====================================================
+[1/12] Synthetic Dataset ........ SUCCESS (combined, seed=42)
+[2/12] Preprocessing ........... SUCCESS
+[3/12] Multi-scale ............. SUCCESS (3 levels)
+[4/12] Feature Detection ....... SUCCESS (Ref=1704, Src=2000)
+[5/12] Matching ................ SUCCESS (430 matches)
+[6/12] Confidence Filtering .... SUCCESS (427 matches)
+[7/12] Spatial Selection ....... SUCCESS (291 pts, 92.2% coverage)
+[8/12] Geometry Estimation ..... SUCCESS (278/291 inliers, RMSE=0.95px)
+[9/12] Sub-pixel Refinement .... SUCCESS (disp=1.18px, conv=58.6%)
+[10/12] Registration ........... SUCCESS
+[11/12] Evaluation ............. SUCCESS (RMSE=0.3091, SSIM=0.037)

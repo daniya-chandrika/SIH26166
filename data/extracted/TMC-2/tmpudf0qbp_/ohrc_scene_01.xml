@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <Product_Observational>
+        <Identification_Area>
+            <logical_identifier>urn:isro:ch2:ohrc:orbit_001</logical_identifier>
+        </Identification_Area>
+        <Observation_Area>
+            <Discipline_Area>
+                <Geometry>
+                    <Bounding_Coordinates>
+                        <west_bounding_coordinate>15.0</west_bounding_coordinate>
+                        <east_bounding_coordinate>25.0</east_bounding_coordinate>
+                        <north_bounding_coordinate>45.0</north_bounding_coordinate>
+                        <south_bounding_coordinate>35.0</south_bounding_coordinate>
+                    </Bounding_Coordinates>
+                </Geometry>
+            </Discipline_Area>
+        </Observation_Area>
+    </Product_Observational>
+    

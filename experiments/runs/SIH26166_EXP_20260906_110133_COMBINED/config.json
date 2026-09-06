@@ -1,0 +1,11 @@
+{
+  "experiment_id": "SIH26166_EXP_20260906_110133_COMBINED",
+  "scenario": "combined",
+  "seed": 42,
+  "image_width": 512,
+  "image_height": 512,
+  "detector": "SIFT",
+  "model": "HOMOGRAPHY",
+  "ransac_threshold": 3.0,
+  "grid": "8x8"
+}

@@ -1,0 +1,43 @@
+{
+  "rmse": 0.30282682180404663,
+  "mae": 0.24092219769954681,
+  "ssim": 0.04725810467167589,
+  "psnr_db": 10.376113079962511,
+  "mutual_information": 0.02219408440929449,
+  "normalized_cross_correlation": 0.06839641292550391,
+  "initial_keypoints_ref": 1669,
+  "initial_keypoints_src": 2000,
+  "candidate_matches": 623,
+  "filtered_matches": 315,
+  "inliers_count": 311,
+  "inlier_ratio": 0.9873015873015873,
+  "spatial_coverage_percentage": 92.1875,
+  "occupied_grid_cells": 59,
+  "total_grid_cells": 64,
+  "reprojection_rmse_px": 0.6255949320748021,
+  "geometric_model": "HOMOGRAPHY",
+  "estimator": "USAC_MAGSAC",
+  "subpixel_mean_displacement_px": 1.1866655389236518,
+  "subpixel_convergence_rate": 0.5176848874598071,
+  "ground_truth_metrics": {
+    "translation_error_px": 0.20944137717298367,
+    "rotation_error_deg": 0.010498991503631316,
+    "scale_error": 0.00042490530315952846,
+    "corner_reprojection_rmse_px": 0.281931995421838,
+    "matrix_frobenius_norm_diff": 0.20944803092859615,
+    "ground_truth_rotation_deg": 25.0,
+    "estimated_rotation_deg": 25.01049899150363,
+    "ground_truth_scale": 1.0,
+    "estimated_scale": 1.0004249053031595,
+    "ground_truth_translation_px": [
+      150.17548152423666,
+      -98.20506848700143
+    ],
+    "estimated_translation_px": [
+      150.36506454833,
+      -98.29408515649507
+    ]
+  },
+  "registration_status": "SUCCESS",
+  "failure_reason": null
+}

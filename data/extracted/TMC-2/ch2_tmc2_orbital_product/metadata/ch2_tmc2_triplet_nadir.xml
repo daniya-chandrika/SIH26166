@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <Identification_Area>
+        <logical_identifier>urn:isro:ch2:tmc2:data:ch2_tmc2_triplet_nadir</logical_identifier>
+        <version_id>1.0</version_id>
+        <title>Chandrayaan-2 TMC-2 Stereo Triplet Nadir Strip</title>
+        <product_class>Product_Observational</product_class>
+        <processing_level>L2_Derived_DEM</processing_level>
+    </Identification_Area>
+    <Observation_Area>
+        <Time_Coordinates>
+            <start_date_time>2023-08-15T06:11:30.000Z</start_date_time>
+            <stop_date_time>2023-08-15T06:15:30.000Z</stop_date_time>
+        </Time_Coordinates>
+        <Investigation_Area>
+            <name>Chandrayaan-2</name>
+            <type>Mission</type>
+        </Investigation_Area>
+        <Observing_System>
+            <Observing_System_Component>
+                <name>Terrain Mapping Camera-2 (TMC-2)</name>
+                <type>Instrument</type>
+            </Observing_System_Component>
+        </Observing_System>
+        <Discipline_Area>
+            <Geometry>
+                <Surface_Geometry>
+                    <center_latitude>-70.9200</center_latitude>
+                    <center_longitude>22.8400</center_longitude>
+                    <Bounding_Coordinates>
+                        <west_bounding_coordinate>22.7000</west_bounding_coordinate>
+                        <east_bounding_coordinate>22.9800</east_bounding_coordinate>
+                        <north_bounding_coordinate>-70.8000</north_bounding_coordinate>
+                        <south_bounding_coordinate>-71.0400</south_bounding_coordinate>
+                    </Bounding_Coordinates>
+                </Surface_Geometry>
+                <Sun_Angles>
+                    <incidence_angle>38.200</incidence_angle>
+                    <emission_angle>12.000</emission_angle>
+                    <phase_angle>36.500</phase_angle>
+                    <solar_azimuth>110.100</solar_azimuth>
+                    <solar_elevation>51.800</solar_elevation>
+                </Sun_Angles>
+            </Geometry>
+            <Cartography>
+                <map_projection_name>Equirectangular</map_projection_name>
+                <coordinate_system_id>Moon_2000</coordinate_system_id>
+                <pixel_resolution unit="m/pixel">5.0</pixel_resolution>
+            </Cartography>
+        </Discipline_Area>
+    </Observation_Area>
+    <File_Area_Observational>
+        <File>
+            <file_name>ch2_tmc2_triplet_nadir.tif</file_name>
+        </File>
+    </File_Area_Observational>
+</Product_Observational>

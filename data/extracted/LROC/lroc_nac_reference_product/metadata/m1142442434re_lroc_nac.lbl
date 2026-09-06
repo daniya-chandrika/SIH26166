@@ -1,0 +1,52 @@
+PDS_VERSION_ID                     = PDS3
+RECORD_TYPE                        = FIXED_LENGTH
+RECORD_BYTES                       = 512
+FILE_RECORDS                       = 512
+
+/* Identification Parameters */
+PRODUCT_ID                         = "M1142442434RE"
+DATA_SET_ID                        = "LRO-L-LROC-2-EDR-V1.0"
+INSTRUMENT_HOST_NAME               = "LUNAR RECONNAISSANCE ORBITER"
+INSTRUMENT_NAME                    = "LUNAR RECONNAISSANCE ORBITER CAMERA"
+INSTRUMENT_ID                      = "LROC"
+SPACECRAFT_NAME                    = "LRO"
+PRODUCT_TYPE                       = "CDR"
+
+/* Time Parameters */
+START_TIME                         = 2023-08-15T06:12:00.000Z
+STOP_TIME                          = 2023-08-15T06:13:30.000Z
+
+/* Spatial and Resolution Parameters */
+CENTER_LATITUDE                    = -70.9200 <DEGREE>
+CENTER_LONGITUDE                   = 22.8200 <DEGREE>
+MINIMUM_LATITUDE                   = -71.0200 <DEGREE>
+MAXIMUM_LATITUDE                   = -70.8200 <DEGREE>
+WESTERNMOST_LONGITUDE              = 22.7200 <DEGREE>
+EASTERNMOST_LONGITUDE              = 22.9200 <DEGREE>
+RESOLUTION                         = 0.500 <METER/PIXEL>
+MAP_SCALE                          = 0.500 <METER/PIXEL>
+
+/* Photometric and Solar Geometry */
+INCIDENCE_ANGLE                    = 45.300 <DEGREE>
+EMISSION_ANGLE                     = 4.100 <DEGREE>
+PHASE_ANGLE                        = 42.100 <DEGREE>
+SOLAR_AZIMUTH_ANGLE                = 114.200 <DEGREE>
+SOLAR_ELEVATION                    = 44.700 <DEGREE>
+LOOK_ANGLE                         = 3.800 <DEGREE>
+
+/* Georeferencing */
+MAP_PROJECTION_TYPE                = "EQUIRECTANGULAR"
+COORDINATE_SYSTEM_NAME             = "MOON_2000"
+TARGET_NAME                        = "MOON"
+
+/* Image Object Pointers and Dimensions */
+^IMAGE                             = "m1142442434re_lroc_nac.tif"
+
+OBJECT                             = IMAGE
+  LINES                            = 512
+  LINE_SAMPLES                     = 512
+  SAMPLE_BITS                      = 8
+  BANDS                            = 1
+END_OBJECT                         = IMAGE
+
+END

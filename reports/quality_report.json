@@ -1,0 +1,132 @@
+{
+  "generated_at": "2026-09-05T05:13:01.608218Z",
+  "summary": {
+    "total_evaluated": 4,
+    "passed": 4,
+    "warnings": 0,
+    "failed": 0,
+    "overall_status": "PASS"
+  },
+  "items": [
+    {
+      "image_id": "ch2_ohrc_20230815_sc23",
+      "product_id": "urn:isro:ch2:ohrc:data:ch2_ohrc_20230815_sc23",
+      "sensor": "OHRC",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\OHRC\\ch2_ohrc_orbital_product\\data\\ch2_ohrc_20230815_sc23.tif",
+      "status": "PASS",
+      "is_corrupted": false,
+      "is_readable": true,
+      "is_blank": false,
+      "has_invalid_values": false,
+      "quality_score": 1.0,
+      "metrics": {
+        "nodata_percentage": 0.0,
+        "saturation_percentage": 0.0,
+        "mean_dn": 11444.05025100708,
+        "std_dn": 2757.367014868877,
+        "min_dn": 1507.0,
+        "max_dn": 31559.0,
+        "variance": 7603072.854686902,
+        "total_pixels": 262144,
+        "valid_pixels": 262144
+      },
+      "missing_metadata_flags": {
+        "missing_coordinates": false,
+        "missing_solar_angles": false,
+        "missing_spatial_resolution": false,
+        "missing_acquisition_time": false
+      },
+      "issues": []
+    },
+    {
+      "image_id": "ch2_tmc2_triplet_nadir",
+      "product_id": "urn:isro:ch2:tmc2:data:ch2_tmc2_triplet_nadir",
+      "sensor": "TMC-2",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\TMC-2\\ch2_tmc2_orbital_product\\data\\ch2_tmc2_triplet_nadir.tif",
+      "status": "PASS",
+      "is_corrupted": false,
+      "is_readable": true,
+      "is_blank": false,
+      "has_invalid_values": false,
+      "quality_score": 1.0,
+      "metrics": {
+        "nodata_percentage": 0.0,
+        "saturation_percentage": 0.0,
+        "mean_dn": 11444.05025100708,
+        "std_dn": 2757.367014868877,
+        "min_dn": 1507.0,
+        "max_dn": 31559.0,
+        "variance": 7603072.854686902,
+        "total_pixels": 262144,
+        "valid_pixels": 262144
+      },
+      "missing_metadata_flags": {
+        "missing_coordinates": false,
+        "missing_solar_angles": false,
+        "missing_spatial_resolution": false,
+        "missing_acquisition_time": false
+      },
+      "issues": []
+    },
+    {
+      "image_id": "ch2_iirs_hyperspectral_cube",
+      "product_id": "urn:isro:ch2:iirs:data:ch2_iirs_hyperspectral_cube",
+      "sensor": "IIRS",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\IIRS\\ch2_iirs_orbital_product\\data\\ch2_iirs_hyperspectral_cube.dat",
+      "status": "PASS",
+      "is_corrupted": false,
+      "is_readable": true,
+      "is_blank": false,
+      "has_invalid_values": false,
+      "quality_score": 1.0,
+      "metrics": {
+        "nodata_percentage": 0.0,
+        "saturation_percentage": 0.0,
+        "mean_dn": null,
+        "std_dn": null,
+        "min_dn": null,
+        "max_dn": null,
+        "variance": null,
+        "total_pixels": 0,
+        "valid_pixels": 0
+      },
+      "missing_metadata_flags": {
+        "missing_coordinates": false,
+        "missing_solar_angles": false,
+        "missing_spatial_resolution": false,
+        "missing_acquisition_time": false
+      },
+      "issues": []
+    },
+    {
+      "image_id": "m1142442434re_lroc_nac",
+      "product_id": "M1142442434RE",
+      "sensor": "LROC",
+      "file_path": "C:\\Users\\adari\\OneDrive\\Desktop\\SIH26166\\data\\extracted\\LROC\\lroc_nac_reference_product\\data\\m1142442434re_lroc_nac.tif",
+      "status": "PASS",
+      "is_corrupted": false,
+      "is_readable": true,
+      "is_blank": false,
+      "has_invalid_values": false,
+      "quality_score": 1.0,
+      "metrics": {
+        "nodata_percentage": 0.0,
+        "saturation_percentage": 0.0,
+        "mean_dn": 44.20455551147461,
+        "std_dn": 10.774259317843862,
+        "min_dn": 10.0,
+        "max_dn": 123.0,
+        "variance": 116.08466384814528,
+        "total_pixels": 262144,
+        "valid_pixels": 262144
+      },
+      "missing_metadata_flags": {
+        "missing_coordinates": false,
+        "missing_solar_angles": false,
+        "missing_spatial_resolution": false,
+        "missing_acquisition_time": false
+      },
+      "issues": []
+    }
+  ]
+}

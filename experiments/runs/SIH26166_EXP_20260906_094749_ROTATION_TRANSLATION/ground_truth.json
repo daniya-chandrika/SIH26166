@@ -1,0 +1,13 @@
+{
+  "rotation_deg": 25.0,
+  "scale": 1.0,
+  "translation_x": 18.0,
+  "translation_y": -14.0,
+  "shear_x": 0.0,
+  "shear_y": 0.0,
+  "perspective_x": 0.0,
+  "perspective_y": 0.0,
+  "illumination_gradient_strength": 0.0,
+  "gaussian_noise_std": 0.01,
+  "blur_sigma": 0.0
+}

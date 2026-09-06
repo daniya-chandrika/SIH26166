@@ -1,0 +1,46 @@
+{
+  "OHRC": {
+    "name": "Orbital High Resolution Camera",
+    "mission": "Chandrayaan-2",
+    "agency": "ISRO",
+    "type": "Optical Panchromatic",
+    "spatial_resolution_range_m": [0.25, 0.32],
+    "nominal_bands": 1,
+    "typical_formats": [".tif", ".tiff", ".img", ".xml"],
+    "metadata_standard": "PDS4",
+    "description": "High resolution optical imaging (0.25m/pixel) from 100km lunar polar orbit."
+  },
+  "TMC-2": {
+    "name": "Terrain Mapping Camera-2",
+    "mission": "Chandrayaan-2",
+    "agency": "ISRO",
+    "type": "Stereo Triplet Panchromatic (Fore, Aft, Nadir)",
+    "spatial_resolution_range_m": [5.0, 5.0],
+    "nominal_bands": 1,
+    "typical_formats": [".tif", ".tiff", ".img", ".xml"],
+    "metadata_standard": "PDS4",
+    "description": "Stereo triplets for high-resolution 3D digital elevation models and lunar orthomosaics."
+  },
+  "IIRS": {
+    "name": "Imaging Infrared Spectrometer",
+    "mission": "Chandrayaan-2",
+    "agency": "ISRO",
+    "type": "Hyperspectral (0.8 - 5.0 micrometers)",
+    "spatial_resolution_range_m": [80.0, 100.0],
+    "nominal_bands": 256,
+    "typical_formats": [".hdr", ".dat", ".img", ".xml", ".cub"],
+    "metadata_standard": "PDS4",
+    "description": "Hyperspectral imaging for mineralogical mapping and OH/H2O absorption features."
+  },
+  "LROC": {
+    "name": "Lunar Reconnaissance Orbiter Camera (NAC/WAC)",
+    "mission": "LRO",
+    "agency": "NASA",
+    "type": "Optical Narrow Angle Camera / Wide Angle Camera",
+    "spatial_resolution_range_m": [0.5, 2.0],
+    "nominal_bands": 1,
+    "typical_formats": [".lbl", ".img", ".tif", ".tiff", ".cub"],
+    "metadata_standard": "PDS3/PDS4",
+    "description": "High resolution lunar reference products (LROC NAC CDR/EDR, Ortho, and DTMs)."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "pipeline": {
+    "name": "Lunar Image Registration Pipeline",
+    "version": "1.0.0",
+    "supported_sensors": ["OHRC", "TMC-2", "IIRS", "LROC"],
+    "enabled_stages": [
+      "INGESTION",
+      "METADATA",
+      "QUALITY"
+    ],
+    "future_stages": [
+      "GEOSPATIAL",
+      "PREPROCESSING",
+      "FEATURES",
+      "MATCHING",
+      "GEOMETRY",
+      "SUBPIXEL",
+      "REGISTRATION",
+      "EVALUATION"
+    ]
+  },
+  "storage": {
+    "preserve_raw_archives": true,
+    "raw_dir": "./data/raw",
+    "extracted_dir": "./data/extracted",
+    "reports_dir": "./reports"
+  },
+  "quality_thresholds": {
+    "max_nodata_percent": 50.0,
+    "max_saturation_percent": 15.0,
+    "min_variance": 1e-4,
+    "fail_on_corrupt": true,
+    "warn_on_missing_angles": true
+  }
+}

@@ -1,0 +1,14 @@
+====================================================
+SIH26166 REGISTRATION PROTOTYPE
+====================================================
+[1/12] Input Dataset ............ SUCCESS (ohrc_scene_01_vs_tmc_scene_01)
+[2/12] Preprocessing ........... SUCCESS
+[3/12] Multi-scale ............. SUCCESS (3 levels)
+[4/12] Feature Detection ....... SUCCESS (Ref=2001, Src=2000)
+[5/12] Matching ................ SUCCESS (539 matches)
+[6/12] Confidence Filtering .... SUCCESS (538 matches)
+[7/12] Spatial Selection ....... SUCCESS (339 pts, 98.4% coverage)
+[8/12] Geometry Estimation ..... SUCCESS (339/339 inliers, RMSE=0.28px)
+[9/12] Sub-pixel Refinement .... SUCCESS (disp=0.51px, conv=96.5%)
+[10/12] Registration ........... SUCCESS
+[11/12] Evaluation ............. SUCCESS (RMSE=0.2824, SSIM=0.092)

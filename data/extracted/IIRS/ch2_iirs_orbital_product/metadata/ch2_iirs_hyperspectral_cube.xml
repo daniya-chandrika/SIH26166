@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <Identification_Area>
+        <logical_identifier>urn:isro:ch2:iirs:data:ch2_iirs_hyperspectral_cube</logical_identifier>
+        <version_id>1.0</version_id>
+        <title>Chandrayaan-2 IIRS Hyperspectral Mineral Cube</title>
+        <product_class>Product_Observational</product_class>
+        <processing_level>Calibrated_Spectra</processing_level>
+    </Identification_Area>
+    <Observation_Area>
+        <Time_Coordinates>
+            <start_date_time>2023-08-15T06:10:00.000Z</start_date_time>
+            <stop_date_time>2023-08-15T06:16:00.000Z</stop_date_time>
+        </Time_Coordinates>
+        <Investigation_Area>
+            <name>Chandrayaan-2</name>
+            <type>Mission</type>
+        </Investigation_Area>
+        <Observing_System>
+            <Observing_System_Component>
+                <name>Imaging Infrared Spectrometer (IIRS)</name>
+                <type>Instrument</type>
+            </Observing_System_Component>
+        </Observing_System>
+        <Discipline_Area>
+            <Geometry>
+                <Surface_Geometry>
+                    <center_latitude>-70.9000</center_latitude>
+                    <center_longitude>22.8000</center_longitude>
+                    <Bounding_Coordinates>
+                        <west_bounding_coordinate>22.6000</west_bounding_coordinate>
+                        <east_bounding_coordinate>23.0000</east_bounding_coordinate>
+                        <north_bounding_coordinate>-70.7500</north_bounding_coordinate>
+                        <south_bounding_coordinate>-71.0500</south_bounding_coordinate>
+                    </Bounding_Coordinates>
+                </Surface_Geometry>
+                <Sun_Angles>
+                    <incidence_angle>45.000</incidence_angle>
+                    <emission_angle>0.500</emission_angle>
+                    <phase_angle>44.800</phase_angle>
+                    <solar_azimuth>115.000</solar_azimuth>
+                    <solar_elevation>45.000</solar_elevation>
+                </Sun_Angles>
+            </Geometry>
+            <Cartography>
+                <map_projection_name>Equirectangular</map_projection_name>
+                <coordinate_system_id>Moon_2000</coordinate_system_id>
+                <pixel_resolution unit="m/pixel">80.0</pixel_resolution>
+            </Cartography>
+        </Discipline_Area>
+    </Observation_Area>
+    <File_Area_Observational>
+        <File>
+            <file_name>ch2_iirs_hyperspectral_cube.dat</file_name>
+        </File>
+    </File_Area_Observational>
+</Product_Observational>

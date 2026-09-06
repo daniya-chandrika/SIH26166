@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  lunar-registration-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sih26166-lunar-dashboard
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      # Optional: Cloud Database & Storage Credentials (or load from .env file)
+      # - SUPABASE_URL=${SUPABASE_URL}
+      # - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      # - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    env_file:
+      - .env
+    volumes:
+      # Persist experimental runs and generated datasets on host machine
+      - ./experiments/runs:/app/experiments/runs
+      - ./data:/app/data
+      - ./reports:/app/reports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

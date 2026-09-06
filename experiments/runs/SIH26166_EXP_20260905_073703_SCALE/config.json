@@ -1,0 +1,11 @@
+{
+  "experiment_id": "SIH26166_EXP_20260905_073703_SCALE",
+  "scenario": "scale",
+  "seed": 42,
+  "image_width": 512,
+  "image_height": 512,
+  "detector": "SIFT",
+  "model": "AFFINE",
+  "ransac_threshold": 3.0,
+  "grid": "8x8"
+}
