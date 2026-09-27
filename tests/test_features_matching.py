@@ -75,7 +75,7 @@ class TestFeaturesAndMatching(unittest.TestCase):
             src_pts, ref_pts, confs, min_confidence=0.5
         )
         self.assertEqual(len(f_conf), 2)
-        self.assertListEqual(list(f_conf), [0.9, 0.6])
+        np.testing.assert_allclose(f_conf, [0.9, 0.6], rtol=1e-5)
 
     def test_spatial_distribution_filter(self):
         """Verify uniform spatial selection partitions points across grid bins."""

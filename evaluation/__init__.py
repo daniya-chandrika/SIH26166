@@ -5,6 +5,12 @@ from evaluation.base import RegistrationEvaluationMetrics, RegistrationEvaluator
 from evaluation.metrics import FullEvaluationReport, RegistrationMetricsCalculator
 from evaluation.reporter import EvaluationReporter
 from evaluation.visualization import RegistrationVisualizer
+from evaluation.control_points import (
+    ControlPoint,
+    ControlPointType,
+    ControlPointEvaluationResult,
+    ControlPointManager
+)
 
 __all__ = [
     "RegistrationEvaluationMetrics",
@@ -13,4 +19,8 @@ __all__ = [
     "RegistrationMetricsCalculator",
     "EvaluationReporter",
     "RegistrationVisualizer",
+    "ControlPoint",
+    "ControlPointType",
+    "ControlPointEvaluationResult",
+    "ControlPointManager"
 ]

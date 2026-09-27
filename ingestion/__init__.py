@@ -5,6 +5,12 @@ from .models import SensorType, FileCategory, ExtractedFileInfo, ArchiveValidati
 from .validator import calculate_sha256, validate_zip_archive, is_safe_extraction_path
 from .extractor import ArchiveExtractor
 from .inspector import ArchiveInspector, classify_file
+from .remote_archive import (
+    RemoteArchiveProvider,
+    RemoteProductCatalogItem,
+    RemoteArchiveSearchQuery,
+    RemoteArchiveClient
+)
 
 __all__ = [
     "SensorType",
@@ -18,4 +24,8 @@ __all__ = [
     "ArchiveExtractor",
     "ArchiveInspector",
     "classify_file",
+    "RemoteArchiveProvider",
+    "RemoteProductCatalogItem",
+    "RemoteArchiveSearchQuery",
+    "RemoteArchiveClient",
 ]

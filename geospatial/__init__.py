@@ -1,6 +1,14 @@
 """
-Geospatial Processing Package.
+Geospatial and Geographic Footprint Processing Package for SIH26166.
 """
-from .base import GeospatialValidatorBase, FootprintOverlapResult
+from geospatial.base import GeospatialValidatorBase, FootprintOverlapResult
+from geospatial.overlap import GeospatialFootprintValidator
+from geospatial.terrain import TerrainSuitabilityEvaluator, TerrainSuitabilityReport
 
-__all__ = ["GeospatialValidatorBase", "FootprintOverlapResult"]
+__all__ = [
+    "GeospatialValidatorBase",
+    "FootprintOverlapResult",
+    "GeospatialFootprintValidator",
+    "TerrainSuitabilityEvaluator",
+    "TerrainSuitabilityReport"
+]

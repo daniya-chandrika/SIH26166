@@ -177,10 +177,29 @@ def main():
     sync_parser.add_argument("--manifest", type=str, default="./reports/dataset_manifest.json", help="Path to manifest JSON/CSV")
     sync_parser.add_argument("--region", type=str, default="R01", help="Target region code")
 
-    # Command: dashboard
-    dash_parser = subparsers.add_parser("dashboard", help="Render team dataset status or launch interactive web dashboard")
-    dash_parser.add_argument("--web", action="store_true", default=False, help="Launch interactive web dashboard server")
-    dash_parser.add_argument("--port", type=int, default=8080, help="Port for web dashboard server (default: 8080)")
+    # Command: benchmark
+    bench_parser = subparsers.add_parser("benchmark", help="Execute standardized Lunar-MatchBench benchmark suite")
+    bench_parser.add_argument("--output-dir", type=str, default="./experiments/benchmarks", help="Output directory for benchmark results")
+
+    # Command: multimodal
+    multi_parser = subparsers.add_parser("multimodal", help="Execute real cross-sensor multimodal registration from archives")
+    multi_parser.add_argument("--ref-zip", type=str, required=True, help="Path to reference product ZIP archive (e.g. LROC)")
+    multi_parser.add_argument("--src-zip", type=str, required=True, help="Path to source product ZIP archive (e.g. OHRC, TMC-2, IIRS)")
+    multi_parser.add_argument("--region", type=str, default="R01", help="Region identifier (default: R01)")
+    multi_parser.add_argument("--ref-sensor", type=str, default="LROC", choices=["OHRC", "TMC-2", "IIRS", "LROC"])
+    multi_parser.add_argument("--src-sensor", type=str, default="OHRC", choices=["OHRC", "TMC-2", "IIRS", "LROC"])
+    multi_parser.add_argument("--detector", type=str, default="SIFT", choices=["SIFT", "ORB", "SUPERPOINT"])
+    multi_parser.add_argument("--model", type=str, default="HOMOGRAPHY", choices=["HOMOGRAPHY", "AFFINE"])
+
+    # Command: remote
+    remote_parser = subparsers.add_parser("remote", help="Remote orbital catalog discovery and localized window retrieval (Mode B)")
+    remote_sub = remote_parser.add_subparsers(dest="remote_action", help="Remote action")
+    rem_search = remote_sub.add_parser("search", help="Search remote catalogs for overlapping products")
+    rem_search.add_argument("--min-lat", type=float, default=-90.0)
+    rem_search.add_argument("--max-lat", type=float, default=-85.0)
+    rem_search.add_argument("--min-lon", type=float, default=-180.0)
+    rem_search.add_argument("--max-lon", type=float, default=180.0)
+    rem_search.add_argument("--sensor", type=str, default=None)
 
     # Command: prototype
     setup_prototype_parser(subparsers)
@@ -193,6 +212,54 @@ def main():
 
     if args.command == "prototype":
         handle_prototype_commands(args)
+
+    elif args.command == "benchmark":
+        from experiments.benchmark import LunarRegistrationBenchmarkRunner
+        runner = LunarRegistrationBenchmarkRunner(output_dir=args.output_dir)
+        print("\n====================================================")
+        print("EXECUTING LUNAR REGISTRATION BENCHMARK SUITE")
+        print("====================================================\n")
+        res = runner.run_benchmark_suite()
+        print(f"\nSuite: {res.suite_name}")
+        print(f"Total Cases: {res.total_cases} | Passed: {res.passed_cases} | Success Rate: {res.success_rate_percentage:.1f}%")
+        print(f"Mean Reprojection RMSE: {res.mean_rmse_px:.4f} px")
+        print(f"Mean Inlier Ratio:      {res.mean_inlier_ratio:.2%}")
+        print(f"Mean Spatial Coverage:  {res.mean_spatial_coverage:.1f}%")
+        print(f"Total Runtime:          {res.total_runtime_seconds:.2f} s")
+        print(f"Benchmark Report Saved: {runner.output_dir / res.suite_id / 'benchmark_report.json'}\n")
+
+    elif args.command == "multimodal":
+        from orchestrator.real_pipeline import RealMultimodalRegistrationOrchestrator, RealPipelineConfig
+        cfg = RealPipelineConfig(
+            region_id=args.region,
+            reference_sensor=SensorType.from_string(args.ref_sensor),
+            source_sensor=SensorType.from_string(args.src_sensor),
+            detector=args.detector,
+            geometric_model=args.model
+        )
+        orchestrator = RealMultimodalRegistrationOrchestrator(cfg)
+        rep = orchestrator.run_from_archives(
+            reference_archive_zip=args.ref_zip,
+            source_archive_zip=args.src_zip
+        )
+        print(f"\nMultimodal Registration Result: {rep.registration_status}")
+        print(f"  - RMSE: {rep.rmse:.4f} px | Inlier Ratio: {rep.inlier_ratio:.2%} | Coverage: {rep.spatial_coverage_percentage:.1f}%\n")
+
+    elif args.command == "remote":
+        from ingestion.remote_archive import RemoteArchiveClient, RemoteArchiveSearchQuery
+        client = RemoteArchiveClient()
+        q = RemoteArchiveSearchQuery(
+            min_latitude=args.min_lat,
+            max_latitude=args.max_lat,
+            min_longitude=args.min_lon,
+            max_longitude=args.max_lon,
+            sensor=args.sensor
+        )
+        results = client.search_products(q)
+        print(f"\nDiscovered {len(results)} remote orbital products:")
+        for r in results:
+            print(f"  [{r.sensor}] {r.product_id} ({r.mission}) | Lat: [{r.min_latitude}, {r.max_latitude}] | GSD: {r.spatial_resolution_m}m")
+        print()
 
     elif args.command == "upload":
         uploader = LunarDatasetUploader()
@@ -231,3 +298,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

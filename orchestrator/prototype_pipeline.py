@@ -36,6 +36,8 @@ from registration.pipeline import RegistrationPipeline
 from evaluation.metrics import RegistrationMetricsCalculator, FullEvaluationReport
 from evaluation.reporter import EvaluationReporter
 from evaluation.visualization import RegistrationVisualizer
+from reports.scientific_report import ScientificReportGenerator
+from features.registry import ModelRegistry
 from experiments.tracker import ExperimentTracker
 
 
@@ -349,6 +351,7 @@ class PrototypeRegistrationOrchestrator:
             )
 
             # 2. Save Artifacts in Run Directory
+            model_meta = ModelRegistry.inspect_model(self.config.detector)
             config_dict = {
                 "experiment_id": experiment_id,
                 "scenario": self.config.scenario,
@@ -358,7 +361,10 @@ class PrototypeRegistrationOrchestrator:
                 "detector": self.config.detector,
                 "model": self.config.geometric_model,
                 "ransac_threshold": self.config.ransac_threshold,
-                "grid": f"{self.config.grid_rows}x{self.config.grid_cols}"
+                "grid": f"{self.config.grid_rows}x{self.config.grid_cols}",
+                "DATA_MODE": "SYNTHETIC",
+                "is_synthetic": True,
+                "model_metadata": model_meta.to_dict()
             }
 
             transform_dict = {
@@ -403,6 +409,16 @@ class PrototypeRegistrationOrchestrator:
                 src_image=preprocessed.source_normalized,
                 reg_image=reg_output.registered_image,
                 diff_image=reg_output.difference_map
+            )
+
+            # Save 14-Section Scientific Report
+            ScientificReportGenerator.save_report(
+                run_dir=run_dir,
+                experiment_id=experiment_id,
+                config=config_dict,
+                metrics=full_report.to_dict(),
+                transform_data=transform_dict,
+                is_synthetic=True
             )
 
             log_msg(f"[12/{total_stages}] Reporting .............. SUCCESS")

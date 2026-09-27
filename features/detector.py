@@ -1,12 +1,13 @@
 """
 Feature Extraction and Keypoint Detection Implementations for SIH26166.
-Provides robust SIFT and ORB feature extractors with automatic fallback.
+Provides SIFT, ORB, and Learned Model adapters with explicit availability verification.
 """
-from typing import Optional
+from typing import Optional, Dict, Any
 import numpy as np
 import cv2
 
 from features.base import FeatureExtractorBase, KeypointsData
+from core.exceptions import ModelUnavailableError
 
 
 class SIFTFeatureDetector(FeatureExtractorBase):
@@ -80,7 +81,7 @@ class SIFTFeatureDetector(FeatureExtractorBase):
 class ORBFeatureDetector(FeatureExtractorBase):
     """
     Oriented FAST and Rotated BRIEF (ORB) detector and binary descriptor.
-    Lightweight, fast fallback when floating-point descriptors are not required.
+    Lightweight, fast feature extractor for resource-constrained execution.
     """
 
     def __init__(self, nfeatures: int = 2000, fast_threshold: int = 20):
@@ -132,20 +133,24 @@ class ORBFeatureDetector(FeatureExtractorBase):
 
 class AutoFeatureDetector(FeatureExtractorBase):
     """
-    Automatic detector selecting SIFT with graceful fallback to ORB.
+    Automatic detector selecting requested detector with explicit error handling.
     """
 
     def __init__(self, preferred: str = "SIFT", nfeatures: int = 2000):
         self._preferred = preferred.upper()
-        self._detector: FeatureExtractorBase
-
         if self._preferred == "SIFT":
-            try:
-                self._detector = SIFTFeatureDetector(nfeatures=nfeatures)
-            except Exception:
-                self._detector = ORBFeatureDetector(nfeatures=nfeatures)
+            self._detector = SIFTFeatureDetector(nfeatures=nfeatures)
         elif self._preferred == "ORB":
             self._detector = ORBFeatureDetector(nfeatures=nfeatures)
+        elif self._preferred in ["SUPERPOINT", "SUPERPOINT_LEARNED"]:
+            from matching.learned.superpoint_adapter import SuperPointAdapter
+            sp = SuperPointAdapter()
+            if not sp.is_available():
+                raise ModelUnavailableError(
+                    model_name="SuperPoint",
+                    missing_dependency="PyTorch or pre-trained SuperPoint weights not installed."
+                )
+            self._detector = sp
         else:
             self._detector = SIFTFeatureDetector(nfeatures=nfeatures)
 
@@ -159,3 +164,26 @@ class AutoFeatureDetector(FeatureExtractorBase):
         mask: Optional[np.ndarray] = None
     ) -> KeypointsData:
         return self._detector.extract_features(image_array, mask=mask)
+
+
+class FeatureDetectorFactory:
+    """Factory to instantiate requested detector without silent fallbacks."""
+
+    @staticmethod
+    def create(detector_name: str = "SIFT", nfeatures: int = 2000) -> FeatureExtractorBase:
+        name = detector_name.upper()
+        if name == "SIFT":
+            return SIFTFeatureDetector(nfeatures=nfeatures)
+        elif name == "ORB":
+            return ORBFeatureDetector(nfeatures=nfeatures)
+        elif name in ["SUPERPOINT", "SUPERPOINT_LEARNED"]:
+            from matching.learned.superpoint_adapter import SuperPointAdapter
+            sp = SuperPointAdapter()
+            if not sp.is_available():
+                raise ModelUnavailableError(
+                    model_name="SuperPoint",
+                    missing_dependency="PyTorch or pre-trained SuperPoint weights (.pth) not found."
+                )
+            return sp
+        else:
+            raise ValueError(f"Unknown feature detector '{detector_name}'. Supported: SIFT, ORB, SuperPoint")

@@ -5,11 +5,12 @@ from typing import Optional
 import numpy as np
 
 from matching.base import MatchResult
+from core.exceptions import ModelUnavailableError
 
 
 class LoFTRAdapter:
     """
-    Adapter for future detector-free LoFTR deep correspondence transformer.
+    Adapter for detector-free LoFTR deep correspondence transformer.
     """
 
     def __init__(self, weights_path: Optional[str] = None):
@@ -33,9 +34,9 @@ class LoFTRAdapter:
         min_confidence: float = 0.2
     ) -> MatchResult:
         if not self.is_available():
-            raise NotImplementedError(
-                "LoFTR backend is not loaded. "
-                "Use SIFT + DescriptorMatcher for offline prototype execution."
+            raise ModelUnavailableError(
+                model_name="LoFTR",
+                missing_dependency="PyTorch or LoFTR weights (.ckpt) not found in environment."
             )
         return MatchResult(
             source_points=np.empty((0, 2), dtype=np.float32),

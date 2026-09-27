@@ -16,6 +16,36 @@ class ScenarioDefinition:
 
 
 SCENARIOS: Dict[str, ScenarioDefinition] = {
+    "translation": ScenarioDefinition(
+        name="translation",
+        description="Pure orbital ground-track planar translation (dx, dy)",
+        geo_params=GeometricParams(
+            rotation_deg=0.0,
+            scale=1.0,
+            translation_x=22.0,
+            translation_y=-16.0
+        ),
+        radio_params=RadiometricParams(
+            contrast_scale=1.0,
+            gaussian_noise_std=0.005
+        )
+    ),
+
+    "rotation": ScenarioDefinition(
+        name="rotation",
+        description="Pure spacecraft orbital yaw rotation (25 deg)",
+        geo_params=GeometricParams(
+            rotation_deg=25.0,
+            scale=1.0,
+            translation_x=0.0,
+            translation_y=0.0
+        ),
+        radio_params=RadiometricParams(
+            contrast_scale=1.0,
+            gaussian_noise_std=0.005
+        )
+    ),
+
     "illumination": ScenarioDefinition(
         name="illumination",
         description="Illumination angle shift, solar gradient variation, and dynamic range changes",

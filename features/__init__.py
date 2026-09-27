@@ -1,13 +1,22 @@
 """
-Features Package for SIH26166.
+Feature Extraction Package for SIH26166.
 """
-from features.base import KeypointsData, FeatureExtractorBase
-from features.detector import SIFTFeatureDetector, ORBFeatureDetector, AutoFeatureDetector
+from features.base import FeatureExtractorBase, KeypointsData
+from features.detector import (
+    SIFTFeatureDetector,
+    ORBFeatureDetector,
+    AutoFeatureDetector,
+    FeatureDetectorFactory
+)
+from features.registry import ModelExecutionMetadata, ModelRegistry
 
 __all__ = [
-    "KeypointsData",
     "FeatureExtractorBase",
+    "KeypointsData",
     "SIFTFeatureDetector",
     "ORBFeatureDetector",
     "AutoFeatureDetector",
+    "FeatureDetectorFactory",
+    "ModelExecutionMetadata",
+    "ModelRegistry"
 ]

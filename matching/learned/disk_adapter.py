@@ -1,31 +1,27 @@
 """
-SuperPoint Neural Feature Detector Adapter Interface for SIH26166.
+DISK (Learning local features with Reinforcement Learning) Adapter Interface for SIH26166.
 """
-from typing import Optional, Dict, Any
+from typing import Optional
 import numpy as np
 
 from features.base import FeatureExtractorBase, KeypointsData
 from core.exceptions import ModelUnavailableError
 
 
-class SuperPointAdapter(FeatureExtractorBase):
+class DISKAdapter(FeatureExtractorBase):
     """
-    Adapter for SuperPoint deep feature detector and descriptor model.
-    Enables deep inference when torch and weights are present,
-    or raises explicit ModelUnavailableError (no silent fallbacks).
+    Adapter for DISK deep local feature detector and descriptor model.
     """
 
     def __init__(self, weights_path: Optional[str] = None, max_keypoints: int = 2048):
         self.weights_path = weights_path
         self.max_keypoints = max_keypoints
-        self._model = None
 
     @property
     def name(self) -> str:
-        return "SuperPoint_Learned"
+        return "DISK_Learned"
 
     def is_available(self) -> bool:
-        """Check if torch and model weights are installed and available."""
         try:
             import torch
             return self.weights_path is not None
@@ -39,13 +35,12 @@ class SuperPointAdapter(FeatureExtractorBase):
     ) -> KeypointsData:
         if not self.is_available():
             raise ModelUnavailableError(
-                model_name="SuperPoint",
-                missing_dependency="PyTorch or SuperPoint pre-trained weights (.pth) not found in environment."
+                model_name="DISK",
+                missing_dependency="PyTorch or pre-trained DISK weights not found in environment."
             )
-        # Deep inference execution
         return KeypointsData(
             keypoints=np.empty((0, 2), dtype=np.float32),
-            descriptors=np.empty((0, 256), dtype=np.float32),
+            descriptors=np.empty((0, 128), dtype=np.float32),
             scores=np.empty((0,), dtype=np.float32),
             image_shape=image_array.shape[:2]
         )

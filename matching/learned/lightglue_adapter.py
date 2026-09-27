@@ -6,11 +6,12 @@ import numpy as np
 
 from features.base import KeypointsData
 from matching.base import FeatureMatcherBase, MatchResult
+from core.exceptions import ModelUnavailableError
 
 
 class LightGlueAdapter(FeatureMatcherBase):
     """
-    Adapter for future LightGlue transformer matcher.
+    Adapter for LightGlue transformer matcher.
     """
 
     def __init__(self, weights_path: Optional[str] = None):
@@ -34,9 +35,9 @@ class LightGlueAdapter(FeatureMatcherBase):
         min_confidence: float = 0.2
     ) -> MatchResult:
         if not self.is_available():
-            raise NotImplementedError(
-                "LightGlue backend is not loaded. "
-                "Use DescriptorMatcher (BFMatcher) for offline prototype execution."
+            raise ModelUnavailableError(
+                model_name="LightGlue",
+                missing_dependency="PyTorch or LightGlue weights not found in environment."
             )
         return MatchResult(
             source_points=np.empty((0, 2), dtype=np.float32),

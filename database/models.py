@@ -164,3 +164,42 @@ class ProcessingLogRecord:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class ControlPointRecord:
+    point_id: str
+    source_x: float
+    source_y: float
+    reference_x: float
+    reference_y: float
+    id: Optional[str] = None
+    experiment_id: Optional[str] = None
+    source_image_id: Optional[str] = None
+    reference_image_id: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    point_type: str = "ALGORITHMIC_INLIER"
+    verification_status: str = "UNVERIFIED"
+    annotator: str = "ALGORITHM"
+    confidence: float = 1.0
+    residual_error_px: Optional[float] = None
+    notes: Optional[str] = None
+    created_at: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ProcessingLockRecord:
+    lock_id: str
+    resource_id: str
+    locked_by: str
+    expires_at: str
+    lock_status: str = "LOCKED"
+    locked_at: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
