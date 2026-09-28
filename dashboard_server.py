@@ -910,7 +910,10 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                 )
 
             res = client.cache_and_register_product(target_item, window_size_px=int(data.get("window_size", 512)))
-            self._send_json(res)
+            payload_out = dict(res)
+            payload_out["product"] = res
+            payload_out["status"] = "READY"
+            self._send_json(payload_out)
         except Exception as e:
             self._send_json({"error": str(e), "status": "ERROR"}, status=400)
 
