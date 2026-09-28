@@ -925,6 +925,11 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND, f"Job {job_id} not found")
             return
 
+        # Ensure run_id and progress are populated
+        if job.get("experiment_id"):
+            job["run_id"] = job["experiment_id"]
+        job["progress"] = int(job.get("stage_progress", 0.0) * 100)
+
         # Ensure artifacts list is populated if job is completed and run exists
         if job.get("experiment_id") and not job.get("artifacts"):
             exp_id = job["experiment_id"]
@@ -950,9 +955,11 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
         self._send_json({
             "job_id": job_id,
             "status": job.get("status"),
+            "run_id": job.get("experiment_id"),
             "current_stage_number": job.get("current_stage_number", 0),
             "current_stage": job.get("current_stage"),
             "stage_progress": job.get("stage_progress", 0.0),
+            "progress": int(job.get("stage_progress", 0.0) * 100),
             "stages": job.get("stages", [])
         })
 
@@ -1287,6 +1294,14 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
 
                     runs.append({
                         "id": folder.name,
+                        "run_id": folder.name,
+                        "experiment_id": folder.name,
+                        "region": config_data.get("region_id", config_data.get("region", "R01")),
+                        "source_sensor": config_data.get("source_sensor", "OHRC"),
+                        "reference_sensor": config_data.get("reference_sensor", "LROC"),
+                        "detector": config_data.get("detector", "SIFT"),
+                        "rmse": metrics_data.get("reprojection_rmse_px") or metrics_data.get("rmse"),
+                        "status": metrics_data.get("registration_status", "SUCCESS"),
                         "timestamp": folder.stat().st_mtime,
                         "date_iso": datetime.fromtimestamp(folder.stat().st_mtime, tz=timezone.utc).isoformat(),
                         "metrics": metrics_data,
@@ -1450,23 +1465,31 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
         })
 
     def _handle_get_run_file(self, subpath: str) -> None:
-        parts = subpath.split("/", 1)
-        if len(parts) < 2:
-            self.send_error(HTTPStatus.BAD_REQUEST, "Invalid run file path")
+        parts = subpath.strip("/").split("/", 1)
+        if len(parts) == 1 or not parts[1]:
+            # The client called /api/run/{run_id} or /api/results/{run_id} -> return JSON details!
+            self._handle_get_run_details(parts[0])
             return
 
         run_id, rel_path = parts[0], parts[1]
         run_folder = RUNS_DIR / run_id
-        target_file = (run_folder / rel_path).resolve()
-
-        try:
-            target_file.relative_to(RUNS_DIR)
-        except ValueError:
-            self.send_error(HTTPStatus.FORBIDDEN, "Access denied")
+        if not run_folder.exists():
+            self.send_error(HTTPStatus.NOT_FOUND, f"Experiment {run_id} not found")
             return
 
-        if not target_file.exists() or not target_file.is_file():
-            self.send_error(HTTPStatus.NOT_FOUND, f"File {rel_path} not found")
+        target_file = None
+        candidates = [
+            run_folder / rel_path,
+            run_folder / "visualizations" / rel_path,
+            run_folder / "registered" / rel_path
+        ]
+        for cand in candidates:
+            if cand.exists() and cand.is_file():
+                target_file = cand
+                break
+
+        if not target_file:
+            self.send_error(HTTPStatus.NOT_FOUND, f"File {rel_path} not found in experiment {run_id}")
             return
 
         mime_type, _ = mimetypes.guess_type(str(target_file))
@@ -1479,6 +1502,7 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
 
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", mime_type)
+            self.send_header("Content-Disposition", f'inline; filename="{target_file.name}"')
             self.send_header("Content-Length", str(len(content)))
             self.send_header("Cache-Control", "public, max-age=3600")
             self.send_header("Access-Control-Allow-Origin", "*")

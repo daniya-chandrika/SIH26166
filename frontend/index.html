@@ -119,12 +119,12 @@
     <!-- Left Collapsible Navigation Sidebar -->
     <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main Navigation">
       <nav class="sidebar-nav">
-        <button class="nav-item" data-view="dashboard" id="nav-dashboard" title="Dashboard">
+        <button class="nav-item active" data-view="dashboard" id="nav-dashboard" title="Dashboard">
           <span class="nav-icon-rail">&#x1F3E0;</span>
           <span class="nav-label">Dashboard</span>
         </button>
 
-        <button class="nav-item active" data-view="ingestion" id="nav-ingestion" title="Data Acquisition">
+        <button class="nav-item" data-view="ingestion" id="nav-ingestion" title="Data Acquisition">
           <span class="nav-icon-rail">&#x1F4C1;</span>
           <span class="nav-label">Data Acquisition</span>
         </button>
@@ -186,9 +186,101 @@
     <main class="app-workspace" id="main-workspace" role="main">
       
       <!-- ==================================================== -->
+      <!-- VIEW 0: MAIN DASHBOARD OVERVIEW                      -->
+      <!-- ==================================================== -->
+      <section class="view-panel active" id="view-dashboard">
+        <!-- Hero Overview Banner -->
+        <div class="hero-banner">
+          <div class="hero-text-block">
+            <div class="welcome-line">
+              <h2>Mission Registration Control Center <span class="wave-emoji">&#x1F315;</span></h2>
+              <span class="job-id-pill font-mono">ISRO &bull; NASA OPERATIONAL</span>
+            </div>
+            <h3 class="hero-title">Multimodal Planetary Alignment Dashboard</h3>
+            <p class="hero-sub">Autonomous sub-pixel registration across Chandrayaan-2 (OHRC, TMC-2, IIRS) and NASA LROC NAC orbital imagery.</p>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+              <button type="button" class="btn btn-primary" onclick="window.switchView('ingestion')">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Acquire Lunar Data (Mode A / B)</span>
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="window.switchView('results')">
+                <span>View Latest Results</span>
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="window.switchView('visualizations')">
+                <span>Split Curtain Visualizer</span>
+              </button>
+            </div>
+          </div>
+          <div class="hero-status-block">
+            <div class="active-badge-group">
+              <span class="scenario-pill">ACTIVE REPOSITORY</span>
+              <span class="status-pill status-success" id="dash-system-status">ONLINE</span>
+            </div>
+            <div class="hero-meta-grid">
+              <div class="meta-item"><span class="meta-k">Total Runs:</span> <span class="meta-v font-mono text-cyan" id="dash-total-runs">--</span></div>
+              <div class="meta-item"><span class="meta-k">Success Rate:</span> <span class="meta-v font-mono text-emerald" id="dash-success-rate">100%</span></div>
+              <div class="meta-item"><span class="meta-k">Best Score:</span> <span class="meta-v font-mono text-amber" id="dash-best-score">--</span></div>
+              <div class="meta-item"><span class="meta-k">Fallback:</span> <span class="meta-v text-emerald">STRICT (ZERO)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Metric Cards Grid -->
+        <div class="system-diagnostics-grid" style="margin-bottom: 24px;">
+          <div class="diag-card">
+            <div class="diag-title">Total Processed Experiments</div>
+            <div class="diag-val text-cyan" id="kpi-total-exp">--</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-title">Mean Reprojection RMSE</div>
+            <div class="diag-val text-emerald" id="kpi-avg-rmse">-- px</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-title">Mean Inlier Match Ratio</div>
+            <div class="diag-val text-violet" id="kpi-avg-inlier">--%</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-title">Spatial Grid Coverage</div>
+            <div class="diag-val text-amber" id="kpi-avg-coverage">--%</div>
+          </div>
+        </div>
+
+        <!-- Latest Experiment Spotlight Card -->
+        <div class="page-card" id="dash-latest-card" style="margin-bottom: 24px;">
+          <div class="card-section-header">
+            <h3>Latest Registered Experiment Spotlight</h3>
+            <span class="status-pill status-success" id="dash-latest-status">COMPLETED</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <div class="dup-row" style="margin-bottom: 8px;"><span class="dup-k">Run Identifier:</span> <span class="font-mono text-cyan" id="dash-latest-id">Loading...</span></div>
+              <div class="dup-row" style="margin-bottom: 8px;"><span class="dup-k">Modality Pair:</span> <span class="font-mono text-amber" id="dash-latest-sensors">OHRC → LROC NAC</span></div>
+              <div class="dup-row" style="margin-bottom: 8px;"><span class="dup-k">Exploration Region:</span> <span class="font-mono text-primary" id="dash-latest-region">R01 (Shackleton Crater)</span></div>
+              <div class="dup-row" style="margin-bottom: 8px;"><span class="dup-k">Geometric Model:</span> <span class="font-mono text-secondary" id="dash-latest-model">HOMOGRAPHY (MAGSAC)</span></div>
+            </div>
+            <div>
+              <table class="metrics-summary-table" style="font-size: 0.8rem;">
+                <tbody>
+                  <tr><td>Reprojection Error:</td><td class="font-mono text-emerald" id="dash-latest-rmse">-- px</td></tr>
+                  <tr><td>Structural Similarity (SSIM):</td><td class="font-mono text-cyan" id="dash-latest-ssim">--</td></tr>
+                  <tr><td>Peak SNR (PSNR):</td><td class="font-mono text-amber" id="dash-latest-psnr">-- dB</td></tr>
+                  <tr><td>Verified Inliers:</td><td class="font-mono text-violet" id="dash-latest-inliers">--</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 18px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-dash-inspect-latest">Inspect Full Results &amp; Matrix</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-dash-viz-latest">Open Visualizations Gallery</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-dash-report-latest">View Scientific Report</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
       <!-- VIEW 1: DATA ACQUISITION (MODE A & MODE B)           -->
       <!-- ==================================================== -->
-      <section class="view-panel active" id="view-ingestion">
+      <section class="view-panel" id="view-ingestion">
         
         <!-- Primary Acquisition Mode Tabs -->
         <div class="data-source-selector-card">
