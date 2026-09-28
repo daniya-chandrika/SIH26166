@@ -73,20 +73,31 @@ class ExperimentTracker:
         with open(run_dir / "logs.txt", "w", encoding="utf-8") as f:
             f.write(log_text)
 
-        # 7. Registered rasters
+        # 7. Registered rasters & TIFF files
         reg_dir = run_dir / "registered"
-        if ref_image is not None:
-            ref_u8 = (ref_image * 255).astype(np.uint8) if ref_image.max() <= 1.0 else ref_image.astype(np.uint8)
-            cv2.imwrite(str(reg_dir / "reference.png"), ref_u8)
+        reg_dir.mkdir(parents=True, exist_ok=True)
+        
+        def _save_raster_pair(img_arr: Optional[np.ndarray], base_name: str):
+            if img_arr is None:
+                return
+            u8 = (np.clip(img_arr, 0.0, 1.0) * 255).astype(np.uint8) if img_arr.max() <= 1.0 else img_arr.astype(np.uint8)
+            # Save PNG
+            cv2.imwrite(str(reg_dir / f"{base_name}.png"), u8)
+            cv2.imwrite(str(run_dir / f"{base_name}.png"), u8)
+            cv2.imwrite(str(run_dir / f"{base_name}_image.png"), u8)
+            # Save TIFF (GeoTIFF-ready raster)
+            cv2.imwrite(str(run_dir / f"{base_name}_image.tif"), u8)
+            cv2.imwrite(str(run_dir / f"{base_name}.tif"), u8)
 
-        if src_image is not None:
-            src_u8 = (src_image * 255).astype(np.uint8) if src_image.max() <= 1.0 else src_image.astype(np.uint8)
-            cv2.imwrite(str(reg_dir / "source.png"), src_u8)
-
+        _save_raster_pair(ref_image, "reference")
+        _save_raster_pair(src_image, "source")
+        _save_raster_pair(reg_image, "registered")
+        _save_raster_pair(diff_image, "difference")
+        
+        # Valid mask (where registered image has data)
         if reg_image is not None:
-            reg_u8 = (reg_image * 255).astype(np.uint8) if reg_image.max() <= 1.0 else reg_image.astype(np.uint8)
-            cv2.imwrite(str(reg_dir / "registered.png"), reg_u8)
+            mask = (reg_image > 0.01).astype(np.uint8) * 255
+            cv2.imwrite(str(run_dir / "valid_mask.png"), mask)
+            cv2.imwrite(str(run_dir / "valid_mask.tif"), mask)
+            cv2.imwrite(str(reg_dir / "valid_mask.png"), mask)
 
-        if diff_image is not None:
-            diff_u8 = (diff_image * 255).astype(np.uint8) if diff_image.max() <= 1.0 else diff_image.astype(np.uint8)
-            cv2.imwrite(str(reg_dir / "difference.png"), diff_u8)

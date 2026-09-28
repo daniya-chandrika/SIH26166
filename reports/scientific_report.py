@@ -203,7 +203,7 @@ class ScientificReportGenerator:
         transform_data: Dict[str, Any],
         is_synthetic: bool = True
     ) -> Path:
-        """Generate and save report.md inside the run directory."""
+        """Generate and save scientific_report.md and scientific_report.json inside the run directory."""
         md_text = cls.generate_markdown_report(
             experiment_id=experiment_id,
             config=config,
@@ -214,4 +214,27 @@ class ScientificReportGenerator:
         report_path = run_dir / "scientific_report.md"
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(md_text)
+
+        report_json_path = run_dir / "scientific_report.json"
+        report_data = {
+            "experiment_id": experiment_id,
+            "platform": "SIH26166 Lunar Multi-Sensor Image Registration System",
+            "generated_at": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+            "data_mode": "SYNTHETIC" if is_synthetic else "REAL",
+            "is_synthetic": is_synthetic,
+            "registration_status": metrics.get("registration_status", "UNKNOWN"),
+            "config": config,
+            "metrics": metrics,
+            "transformation": transform_data,
+            "sections": {
+                "1_experiment_info": {"experiment_id": experiment_id, "data_mode": "SYNTHETIC" if is_synthetic else "REAL"},
+                "2_input_configuration": config,
+                "3_metrics": metrics,
+                "4_transformation": transform_data
+            }
+        }
+        with open(report_json_path, "w", encoding="utf-8") as f:
+            json.dump(report_data, f, indent=2)
+
         return report_path
+

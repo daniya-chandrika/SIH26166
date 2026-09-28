@@ -7,7 +7,7 @@ sub-pixel refinement, and rigorous control-point evaluation.
 """
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Callable
 import io
 import time
 import json
@@ -48,6 +48,9 @@ from core.exceptions import (
     InsufficientMatchesError
 )
 
+StageCallbackType = Callable[[int, str, str, str, Optional[Dict[str, Any]]], None]
+
+
 
 @dataclass
 class RealPipelineConfig:
@@ -86,7 +89,8 @@ class RealMultimodalRegistrationOrchestrator:
         reference_archive_zip: str | Path,
         source_archive_zip: str | Path,
         raw_work_dir: str | Path = "./data/raw",
-        extract_work_dir: str | Path = "./data/extracted"
+        extract_work_dir: str | Path = "./data/extracted",
+        stage_callback: Optional[StageCallbackType] = None
     ) -> FullEvaluationReport:
         """
         Execute full registration starting from real sensor ZIP archives (Mode A).
@@ -115,14 +119,15 @@ class RealMultimodalRegistrationOrchestrator:
             raise ValueError(f"No metadata found in source archive '{src_zip.name}'")
         meta_src = meta_src_list[0]
 
-        return self.run(meta_reference=meta_ref, meta_source=meta_src)
+        return self.run(meta_reference=meta_ref, meta_source=meta_src, stage_callback=stage_callback)
 
     def run(
         self,
         meta_reference: LunarProductMetadata,
         meta_source: LunarProductMetadata,
         reference_raster_override: Optional[np.ndarray] = None,
-        source_raster_override: Optional[np.ndarray] = None
+        source_raster_override: Optional[np.ndarray] = None,
+        stage_callback: Optional[StageCallbackType] = None
     ) -> FullEvaluationReport:
         """
         Execute full scientific multi-sensor registration workflow on product metadata & rasters.
@@ -136,6 +141,13 @@ class RealMultimodalRegistrationOrchestrator:
             print(msg)
             log_buffer.write(msg + "\n")
 
+        def notify_stage(stage_num: int, stage_name: str, status: str, message: str, details: Optional[Dict[str, Any]] = None):
+            if stage_callback:
+                try:
+                    stage_callback(stage_num, stage_name, status, message, details)
+                except Exception as ex:
+                    print(f"Stage callback error: {ex}")
+
         log_msg("=" * 64)
         log_msg("SIH26166 REAL MULTIMODAL LUNAR REGISTRATION PIPELINE")
         log_msg("=" * 64)
@@ -148,6 +160,8 @@ class RealMultimodalRegistrationOrchestrator:
         # -------------------------------------------------------------
         # STAGE 1: Data Ingestion & Quality Control Validation
         # -------------------------------------------------------------
+        stage_1_name = "Validation & Quality Assurance"
+        notify_stage(1, stage_1_name, "RUNNING", "Validating product radiometry, sensor metadata, and bit depth...", None)
         try:
             qc_ref = self.quality_checker.evaluate(meta_reference)
             qc_src = self.quality_checker.evaluate(meta_source)
@@ -158,13 +172,20 @@ class RealMultimodalRegistrationOrchestrator:
                 raise ValueError(f"Source product failed QC: {'; '.join(qc_src.issues)}")
 
             log_msg(f"[1/{total_stages}] Quality Assurance ..... SUCCESS (Ref Score: {qc_ref.quality_score:.2f}, Src Score: {qc_src.quality_score:.2f})")
+            notify_stage(1, stage_1_name, "COMPLETED", f"QC Passed (Ref Score: {qc_ref.quality_score:.2f}, Src Score: {qc_src.quality_score:.2f})", {
+                "ref_score": qc_ref.quality_score,
+                "src_score": qc_src.quality_score
+            })
         except Exception as e:
             log_msg(f"[1/{total_stages}] Quality Assurance ..... FAILED ({str(e)})")
-            return self._build_failure_report("Quality Assurance", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(1, stage_1_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_1_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 2: Geographic Footprint & Overlap Validation
         # -------------------------------------------------------------
+        stage_2_name = "Geospatial Footprint & Overlap"
+        notify_stage(2, stage_2_name, "RUNNING", "Computing geographic intersection polygon and common footprint overlap...", None)
         try:
             overlap_res = self.geo_validator.compute_overlap(meta_source, meta_reference)
             if not overlap_res.is_valid_pair and overlap_res.overlap_percentage < self.config.min_overlap_threshold:
@@ -173,13 +194,19 @@ class RealMultimodalRegistrationOrchestrator:
                     threshold_pct=self.config.min_overlap_threshold
                 )
             log_msg(f"[2/{total_stages}] Geographic Overlap ... SUCCESS ({overlap_res.overlap_percentage:.2f}% common footprint)")
+            notify_stage(2, stage_2_name, "COMPLETED", f"Common footprint: {overlap_res.overlap_percentage:.2f}%", {
+                "overlap_percentage": overlap_res.overlap_percentage
+            })
         except Exception as e:
             log_msg(f"[2/{total_stages}] Geographic Overlap ... FAILED ({str(e)})")
-            return self._build_failure_report("Geographic Overlap", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(2, stage_2_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_2_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 3: Raster Data Loading & Calibrated Normalization
         # -------------------------------------------------------------
+        stage_3_name = "Terrain Suitability & Radiometry"
+        notify_stage(3, stage_3_name, "RUNNING", "Loading calibrated rasters, assessing crater morphology & terrain roughness...", None)
         try:
             ref_img = self._load_raster(meta_reference, reference_raster_override)
             src_img = self._load_raster(meta_source, source_raster_override)
@@ -193,13 +220,20 @@ class RealMultimodalRegistrationOrchestrator:
                 f"(Suitability: Ref={terrain_ref.suitability_score:.2f} [{terrain_ref.feature_richness_verdict}], "
                 f"Src={terrain_src.suitability_score:.2f} [{terrain_src.feature_richness_verdict}])"
             )
+            notify_stage(3, stage_3_name, "COMPLETED", f"Terrain suitability: Ref={terrain_ref.suitability_score:.2f}, Src={terrain_src.suitability_score:.2f}", {
+                "ref_suitability": terrain_ref.suitability_score,
+                "src_suitability": terrain_src.suitability_score
+            })
         except Exception as e:
             log_msg(f"[3/{total_stages}] Terrain Analysis ...... FAILED ({str(e)})")
-            return self._build_failure_report("Raster Loading / Terrain Analysis", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(3, stage_3_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_3_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 4: Sensor-Aware Preprocessing & Multi-scale Pyramids
         # -------------------------------------------------------------
+        stage_4_name = "GSD Equalization & Preprocessing"
+        notify_stage(4, stage_4_name, "RUNNING", "Harmonizing ground sampling distances and applying adaptive CLAHE contrast enhancement...", None)
         try:
             # GSD Resampling if resolution is known
             ref_gsd = meta_reference.spatial_resolution or 0.5
@@ -215,13 +249,21 @@ class RealMultimodalRegistrationOrchestrator:
             src_enh = clahe.apply(src_u8)
 
             log_msg(f"[4/{total_stages}] Preprocessing ......... SUCCESS (GSD: Ref={ref_gsd}m, Src={src_gsd}m, Ratio={scale_ratio:.2f})")
+            notify_stage(4, stage_4_name, "COMPLETED", f"GSD normalized: Ref={ref_gsd}m, Src={src_gsd}m (Ratio: {scale_ratio:.2f})", {
+                "ref_gsd": ref_gsd,
+                "src_gsd": src_gsd,
+                "scale_ratio": scale_ratio
+            })
         except Exception as e:
             log_msg(f"[4/{total_stages}] Preprocessing ......... FAILED ({str(e)})")
-            return self._build_failure_report("Preprocessing", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(4, stage_4_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_4_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 5: Feature Detection
         # -------------------------------------------------------------
+        stage_5_name = "Multi-Scale Feature Detection"
+        notify_stage(5, stage_5_name, "RUNNING", f"Detecting scale-invariant keypoints via {self.config.detector}...", None)
         try:
             detector = FeatureDetectorFactory.create(self.config.detector, nfeatures=2000)
             feats_ref = detector.extract_features(ref_enh)
@@ -234,13 +276,21 @@ class RealMultimodalRegistrationOrchestrator:
                 raise InsufficientMatchesError(match_count=min(n_ref, n_src), required_count=4)
 
             log_msg(f"[5/{total_stages}] Feature Detection ..... SUCCESS (Ref={n_ref} pts, Src={n_src} pts via {detector.name})")
+            notify_stage(5, stage_5_name, "COMPLETED", f"Extracted {n_src} source and {n_ref} reference keypoints ({detector.name})", {
+                "ref_keypoints": n_ref,
+                "src_keypoints": n_src,
+                "detector": detector.name
+            })
         except Exception as e:
             log_msg(f"[5/{total_stages}] Feature Detection ..... FAILED ({str(e)})")
-            return self._build_failure_report("Feature Detection", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(5, stage_5_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_5_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 6: Correspondence Matching
         # -------------------------------------------------------------
+        stage_6_name = "Cross-Sensor Correspondence Matching"
+        notify_stage(6, stage_6_name, "RUNNING", "Matching cross-sensor feature descriptors with Lowe's ratio test...", None)
         try:
             matcher = DescriptorMatcher(ratio_threshold=0.82)
             raw_matches = matcher.match(feats_src, feats_ref, min_confidence=0.0)
@@ -250,13 +300,19 @@ class RealMultimodalRegistrationOrchestrator:
                 raise InsufficientMatchesError(match_count=raw_count, required_count=4)
 
             log_msg(f"[6/{total_stages}] Matching .............. SUCCESS ({raw_count} initial matches)")
+            notify_stage(6, stage_6_name, "COMPLETED", f"Identified {raw_count} candidate cross-sensor matches", {
+                "raw_matches": raw_count
+            })
         except Exception as e:
             log_msg(f"[6/{total_stages}] Matching .............. FAILED ({str(e)})")
-            return self._build_failure_report("Matching", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(6, stage_6_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_6_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 7: Confidence Filtering
         # -------------------------------------------------------------
+        stage_7_name = "Confidence & Outlier Rejection"
+        notify_stage(7, stage_7_name, "RUNNING", f"Filtering tie-points with confidence >= {self.config.min_confidence}...", None)
         try:
             conf_src, conf_ref, conf_scores = ConfidenceFilter.filter_by_confidence(
                 src_points=raw_matches.source_points,
@@ -269,13 +325,19 @@ class RealMultimodalRegistrationOrchestrator:
                 raise InsufficientMatchesError(match_count=filtered_count, required_count=4)
 
             log_msg(f"[7/{total_stages}] Confidence Filter .... SUCCESS ({filtered_count} matches passed threshold)")
+            notify_stage(7, stage_7_name, "COMPLETED", f"{filtered_count} high-confidence matches verified", {
+                "filtered_matches": filtered_count
+            })
         except Exception as e:
             log_msg(f"[7/{total_stages}] Confidence Filter .... FAILED ({str(e)})")
-            return self._build_failure_report("Confidence Filtering", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(7, stage_7_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_7_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 8: Spatial Distribution Optimization
         # -------------------------------------------------------------
+        stage_8_name = "Spatial Distribution Optimization"
+        notify_stage(8, stage_8_name, "RUNNING", f"Partitioning tie-points into {self.config.grid_rows}x{self.config.grid_cols} spatial grid...", None)
         try:
             spatial_filter = SpatialDistributionFilter(
                 grid_rows=self.config.grid_rows,
@@ -294,13 +356,21 @@ class RealMultimodalRegistrationOrchestrator:
                 f"({len(spatial_res.reference_points)} pts across {spatial_res.occupied_cells}/{spatial_res.total_cells} cells, "
                 f"{spatial_res.spatial_coverage_percentage:.1f}% coverage)"
             )
+            notify_stage(8, stage_8_name, "COMPLETED", f"Spatial coverage: {spatial_res.spatial_coverage_percentage:.1f}% ({spatial_res.occupied_cells}/{spatial_res.total_cells} cells)", {
+                "spatial_coverage": spatial_res.spatial_coverage_percentage,
+                "occupied_cells": spatial_res.occupied_cells,
+                "total_cells": spatial_res.total_cells
+            })
         except Exception as e:
             log_msg(f"[8/{total_stages}] Spatial Selection ..... FAILED ({str(e)})")
-            return self._build_failure_report("Spatial Selection", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(8, stage_8_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_8_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 9: Robust Geometric Estimation
         # -------------------------------------------------------------
+        stage_9_name = "Robust Geometric Estimation"
+        notify_stage(9, stage_9_name, "RUNNING", f"Fitting robust {self.config.geometric_model} transformation via MAGSAC/RANSAC...", None)
         try:
             geo_model = GeometricModelType.from_string(self.config.geometric_model)
             estimator = RobustGeometricEstimator(
@@ -320,13 +390,22 @@ class RealMultimodalRegistrationOrchestrator:
                 f"({transform_res.inliers_count}/{len(spatial_res.source_points)} inliers, "
                 f"RMSE={transform_res.residual_rmse:.2f}px via {transform_res.estimator})"
             )
+            notify_stage(9, stage_9_name, "COMPLETED", f"Consensus geometry: {transform_res.inliers_count} inliers (RMSE={transform_res.residual_rmse:.2f}px)", {
+                "inliers_count": transform_res.inliers_count,
+                "inlier_ratio": transform_res.inlier_ratio,
+                "rmse": transform_res.residual_rmse,
+                "estimator": transform_res.estimator
+            })
         except Exception as e:
             log_msg(f"[9/{total_stages}] Geometry Estimation ... FAILED ({str(e)})")
-            return self._build_failure_report("Geometry Estimation", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(9, stage_9_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_9_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 10: Sub-Pixel Refinement
         # -------------------------------------------------------------
+        stage_10_name = "Sub-Pixel Refinement"
+        notify_stage(10, stage_10_name, "RUNNING", "Optimizing tie-points with sub-pixel gradient correlation...", None)
         try:
             subpixel_refiner = SubpixelRefiner(patch_size=self.config.subpixel_patch_size)
             inlier_mask = transform_res.inliers_mask
@@ -340,13 +419,20 @@ class RealMultimodalRegistrationOrchestrator:
                 f"[10/{total_stages}] Sub-pixel Refinement .. SUCCESS "
                 f"(disp={sub_res.displacement_norm_mean:.2f}px, conv={sub_res.convergence_rate:.1%})"
             )
+            notify_stage(10, stage_10_name, "COMPLETED", f"Sub-pixel convergence: {sub_res.convergence_rate:.1%} (Mean disp: {sub_res.displacement_norm_mean:.2f}px)", {
+                "displacement_mean": sub_res.displacement_norm_mean,
+                "convergence_rate": sub_res.convergence_rate
+            })
         except Exception as e:
             log_msg(f"[10/{total_stages}] Sub-pixel Refinement .. FAILED ({str(e)})")
-            return self._build_failure_report("Sub-pixel Refinement", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(10, stage_10_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_10_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 11: Image Warping & Registration
         # -------------------------------------------------------------
+        stage_11_name = "Image Warping & Alignment"
+        notify_stage(11, stage_11_name, "RUNNING", "Applying transformation matrix and bicubic interpolation...", None)
         try:
             registrar = RegistrationPipeline()
             reg_output = registrar.register(
@@ -355,13 +441,17 @@ class RealMultimodalRegistrationOrchestrator:
                 transformation=transform_res
             )
             log_msg(f"[11/{total_stages}] Image Warping ......... SUCCESS")
+            notify_stage(11, stage_11_name, "COMPLETED", "Warped registered raster generated successfully", None)
         except Exception as e:
             log_msg(f"[11/{total_stages}] Image Warping ......... FAILED ({str(e)})")
-            return self._build_failure_report("Image Warping", str(e), run_dir, log_buffer.getvalue())
+            notify_stage(11, stage_11_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_11_name, str(e), run_dir, log_buffer.getvalue())
 
         # -------------------------------------------------------------
         # STAGE 12: Quantitative Multi-Metric Evaluation & Control Points
         # -------------------------------------------------------------
+        stage_12_name = "Evaluation & Scientific Reporting"
+        notify_stage(12, stage_12_name, "RUNNING", "Calculating SSIM, PSNR, NMI, RMSE and archiving scientific artifacts...", None)
         try:
             metrics_calc = RegistrationMetricsCalculator()
             eval_metrics = metrics_calc.evaluate(
@@ -461,7 +551,7 @@ class RealMultimodalRegistrationOrchestrator:
             with open(run_dir / "control_points.json", "w", encoding="utf-8") as f:
                 json.dump(cp_manager.to_list(), f, indent=2)
 
-            # Save 14-Section Scientific Report
+            # Save 14-Section Scientific Report (MD + JSON)
             ScientificReportGenerator.save_report(
                 run_dir=run_dir,
                 experiment_id=experiment_id,
@@ -477,7 +567,21 @@ class RealMultimodalRegistrationOrchestrator:
             log_msg(f"Artifacts preserved in: {run_dir}")
             log_msg("=" * 64 + "\n")
 
+            notify_stage(12, stage_12_name, "COMPLETED", f"Registration completed successfully (RMSE: {full_report.rmse:.4f}px, Inlier Ratio: {full_report.inlier_ratio:.1%})", {
+                "experiment_id": experiment_id,
+                "rmse": full_report.rmse,
+                "ssim": full_report.ssim,
+                "inlier_ratio": full_report.inlier_ratio,
+                "run_dir": str(run_dir)
+            })
+
             return full_report
+
+        except Exception as e:
+            log_msg(f"[12/{total_stages}] Evaluation & Reporting FAILED ({str(e)})")
+            notify_stage(12, stage_12_name, "FAILED", str(e), {"error": str(e)})
+            return self._build_failure_report(stage_12_name, str(e), run_dir, log_buffer.getvalue())
+
 
         except Exception as e:
             log_msg(f"[12/{total_stages}] Evaluation & Reporting FAILED ({str(e)})")

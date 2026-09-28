@@ -59,6 +59,32 @@ class RemoteSearchRequest(BaseModel):
     mission: Optional[str] = None
 
 
+from pipeline.uploader import LunarDatasetUploader
+from geospatial.catalog import (
+    LunarCatalogDiscoveryService,
+    PREDEFINED_LUNAR_REGIONS,
+    validate_lunar_coordinates
+)
+
+class CoordinateSearchRequest(BaseModel):
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    radius_km: float = 10.0
+    min_latitude: Optional[float] = None
+    max_latitude: Optional[float] = None
+    min_longitude: Optional[float] = None
+    max_longitude: Optional[float] = None
+    sensor: Optional[str] = None
+    region_id: Optional[str] = None
+
+class RemoteCacheRequest(BaseModel):
+    product_id: str
+    sensor: Optional[str] = "LROC"
+    mission: Optional[str] = "LRO"
+    latitude: Optional[float] = -89.90
+    longitude: Optional[float] = 0.00
+    window_size: int = 512
+
 # Endpoints
 
 @router.get("/health")
@@ -78,12 +104,63 @@ def get_health() -> Dict[str, Any]:
 @router.get("/regions")
 def get_regions() -> Dict[str, Any]:
     """List supported lunar exploration regions (R01 - R10)."""
-    from database.team import TEAM_REGIONS
-    regions = [
-        {"region_code": r["code"], "name": r["name"], "center_lat": r["center_lat"], "center_lon": r["center_lon"], "description": r["description"]}
-        for r in TEAM_REGIONS
-    ]
+    service = LunarCatalogDiscoveryService()
+    regions = service.get_predefined_regions()
     return {"regions": regions, "total": len(regions)}
+
+
+@router.post("/regions/search")
+def search_region_coordinates(req: CoordinateSearchRequest) -> Dict[str, Any]:
+    """Search products intersecting geographic ROI coordinates."""
+    service = LunarCatalogDiscoveryService()
+    if req.latitude is not None and req.longitude is not None:
+        return service.search_by_coordinates(
+            latitude=req.latitude,
+            longitude=req.longitude,
+            radius_km=req.radius_km,
+            sensor_filter=req.sensor
+        )
+    elif req.min_latitude is not None:
+        return service.search_by_bbox(
+            min_lat=req.min_latitude,
+            max_lat=req.max_latitude or 90.0,
+            min_lon=req.min_longitude or -180.0,
+            max_lon=req.max_longitude or 180.0,
+            sensor_filter=req.sensor
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Provide latitude/longitude or bounding box.")
+
+
+@router.get("/sensor-matrix")
+def get_sensor_matrix() -> Dict[str, Any]:
+    """Get dynamic sensor availability matrix for all regions."""
+    service = LunarCatalogDiscoveryService()
+    matrix = []
+    for reg in PREDEFINED_LUNAR_REGIONS:
+        res = service.search_by_bbox(
+            min_lat=reg["min_lat"], max_lat=reg["max_lat"],
+            min_lon=reg["min_lon"], max_lon=reg["max_lon"],
+            region_id=reg["code"]
+        )
+        matrix.append({
+            "region_code": reg["code"],
+            "region_name": reg["name"],
+            "matrix": res["sensor_availability_matrix"]
+        })
+    return {"sensor_matrix": matrix}
+
+
+@router.post("/ingestion/upload")
+def upload_file_product(file: UploadFile = File(...), region_code: str = "R01", sensor: Optional[str] = "AUTO_DETECT") -> Dict[str, Any]:
+    """Upload dataset archive or raster, validate SHA-256, extract metadata, and catalog in DB."""
+    save_path = DATA_DIR / "raw" / file.filename
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(save_path, "wb") as f:
+        f.write(file.file.read())
+    
+    uploader = LunarDatasetUploader()
+    return uploader.upload_dataset(archive_path=save_path, region_code=region_code, sensor=sensor)
 
 
 @router.get("/products")
@@ -97,6 +174,60 @@ def get_products(region_id: Optional[str] = None, sensor: Optional[str] = None) 
     )
     products = [p.to_dict() for p in client.search_products(q)]
     return {"products": products, "total": len(products)}
+
+
+@router.get("/products/pairs")
+def get_candidate_pairs(region_id: str = "R01") -> Dict[str, Any]:
+    """Discover candidate cross-sensor pairs."""
+    service = LunarCatalogDiscoveryService()
+    res = service.search_by_bbox(
+        min_lat=-90.0, max_lat=90.0, min_lon=-180.0, max_lon=180.0,
+        region_id=region_id
+    )
+    return {"pairs": res["candidate_pairs"], "total": len(res["candidate_pairs"])}
+
+
+@router.post("/remote/search")
+def search_remote_archives(req: RemoteSearchRequest) -> Dict[str, Any]:
+    """Search remote lunar archives."""
+    client = RemoteArchiveClient()
+    q = RemoteArchiveSearchQuery(
+        min_latitude=req.min_latitude,
+        max_latitude=req.max_latitude,
+        min_longitude=req.min_longitude,
+        max_longitude=req.max_longitude,
+        sensor=req.sensor,
+        mission=req.mission
+    )
+    items = [p.to_dict() for p in client.search_products(q)]
+    return {"results": items, "count": len(items)}
+
+
+@router.post("/remote/cache")
+def cache_remote_product(req: RemoteCacheRequest) -> Dict[str, Any]:
+    """Cache spatial window for a remote product."""
+    client = RemoteArchiveClient()
+    items = client.search_products(RemoteArchiveSearchQuery(min_latitude=-90, max_latitude=90, min_longitude=-180, max_longitude=180))
+    target = next((it for it in items if it.product_id == req.product_id), None)
+    if not target:
+        from ingestion.remote_archive import RemoteProductCatalogItem, RemoteArchiveProvider
+        target = RemoteProductCatalogItem(
+            product_id=req.product_id,
+            sensor=req.sensor or "LROC",
+            mission=req.mission or "LRO",
+            archive_provider=RemoteArchiveProvider.LROC_PDS,
+            center_latitude=req.latitude or -89.9,
+            center_longitude=req.longitude or 0.0,
+            min_latitude=(req.latitude or -89.9) - 0.1,
+            max_latitude=(req.latitude or -89.9) + 0.1,
+            min_longitude=(req.longitude or 0.0) - 1.0,
+            max_longitude=(req.longitude or 0.0) + 1.0,
+            spatial_resolution_m=0.50,
+            acquisition_date="2021-01-01",
+            download_url="https://wms.lroc.asu.edu/lroc/pds/sample.img",
+            file_size_mb=120.0
+        )
+    return client.cache_and_register_product(target, window_size_px=req.window_size)
 
 
 @router.get("/metadata")
@@ -141,7 +272,7 @@ def trigger_registration(req: RegistrationRequest, background_tasks: BackgroundT
             "metrics": report.to_dict(),
             "failure_reason": report.failure_reason
         }
-    elif req.mode in ["real", "remote"]:
+    elif req.mode in ["real", "mode_a", "mode_b", "remote"]:
         # Execute Real Multimodal Registration Orchestrator
         client = RemoteArchiveClient()
         pairs = client.find_cross_mission_pairs(

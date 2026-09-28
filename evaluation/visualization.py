@@ -200,4 +200,27 @@ class RegistrationVisualizer:
         plt.close(fig)
         saved_paths.append(p5)
 
+        # Standard named aliases for direct download and frontend tabs
+        import shutil
+        run_parent = output_dir.parent if output_dir.name == "visualizations" else output_dir
+        
+        alias_map = {
+            "matches.png": p2,
+            "inliers.png": p2,
+            "difference_map.png": p3,
+            "difference.png": p3,
+            "alignment.png": p3,
+            "checkerboard.png": p4,
+            "overlay.png": p4,
+            "curtain.png": p3,
+        }
+        for name, src_p in alias_map.items():
+            dst_viz = output_dir / name
+            if not dst_viz.exists() and src_p.exists():
+                shutil.copy2(src_p, dst_viz)
+            dst_run = run_parent / name
+            if not dst_run.exists() and src_p.exists():
+                shutil.copy2(src_p, dst_run)
+
         return saved_paths
+

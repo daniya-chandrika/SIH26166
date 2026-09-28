@@ -5,6 +5,7 @@ from .models import SensorType, FileCategory, ExtractedFileInfo, ArchiveValidati
 from .validator import calculate_sha256, validate_zip_archive, is_safe_extraction_path
 from .extractor import ArchiveExtractor
 from .inspector import ArchiveInspector, classify_file
+from .detector import LunarSensorDetector
 from .remote_archive import (
     RemoteArchiveProvider,
     RemoteProductCatalogItem,
@@ -24,6 +25,7 @@ __all__ = [
     "ArchiveExtractor",
     "ArchiveInspector",
     "classify_file",
+    "LunarSensorDetector",
     "RemoteArchiveProvider",
     "RemoteProductCatalogItem",
     "RemoteArchiveSearchQuery",

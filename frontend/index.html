@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LunarReg – Scientific Lunar Image Registration System (SIH26166)</title>
-  <meta name="description" content="Multi-Sensor Lunar Image Alignment & Scientific Validation Platform for Chandrayaan-2 (OHRC, TMC-2, IIRS) and LROC instruments." />
+  <title>SIH26166 – Scientific Multimodal Lunar Image Registration Platform</title>
+  <meta name="description" content="Dynamic Multimodal Lunar Data Ingestion & Registration Platform for Chandrayaan-2 (OHRC, TMC-2, IIRS) and NASA LROC orbital data." />
   
-  <!-- Google Fonts: Outfit (UI), JetBrains Mono (Scientific/Data), Inter (General) -->
+  <!-- Google Fonts: Outfit (Display/UI), JetBrains Mono (Scientific), Inter (Standard) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -17,9 +17,45 @@
   <!-- Toast Notification Hub -->
   <div id="toast-hub" class="toast-hub" aria-live="polite"></div>
 
+  <!-- Duplicate File Alert Modal -->
+  <div id="duplicate-modal" class="modal-backdrop" style="display: none;" role="dialog" aria-labelledby="dup-title">
+    <div class="modal-card modal-warning-card">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <span class="modal-icon text-amber">&#x26A0;</span>
+          <h2 id="dup-title">Duplicate Product Detected</h2>
+        </div>
+        <button id="btn-close-dup-modal" class="btn-close" aria-label="Close Modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="duplicate-alert-box">
+          <div class="dup-badge">DUPLICATE_FILE</div>
+          <p class="dup-desc">This product already exists in the local archive. Re-uploading duplicate raw raster is skipped to prevent archive duplication.</p>
+          <div class="dup-info-grid">
+            <div class="dup-row"><span class="dup-k">Product ID:</span> <span class="dup-v font-mono text-cyan" id="dup-product-id">--</span></div>
+            <div class="dup-row"><span class="dup-k">Sensor:</span> <span class="dup-v font-mono" id="dup-sensor">--</span></div>
+            <div class="dup-row"><span class="dup-k">Region:</span> <span class="dup-v font-mono" id="dup-region">--</span></div>
+            <div class="dup-row"><span class="dup-k">SHA-256:</span> <span class="dup-v font-mono text-muted text-xs" id="dup-sha256">--</span></div>
+            <div class="dup-row"><span class="dup-k">Catalog Status:</span> <span class="dup-v text-emerald" id="dup-status">ALREADY_CATALOGED_AND_READY</span></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btn-dup-use-existing" class="btn btn-primary">Use Existing Ingested Product</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Top Application Header -->
   <header class="app-header" role="banner">
     <div class="header-left">
+      <!-- Hamburger Toggle Button -->
+      <button type="button" id="btn-toggle-sidebar" class="btn-sidebar-toggle" title="Toggle Sidebar (Expand/Collapse)" aria-label="Toggle Sidebar">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+
       <div class="brand-badge">
         <div class="lunar-globe-icon" aria-hidden="true">
           <div class="crater c1"></div>
@@ -32,146 +68,117 @@
             <span class="brand-name">LunarReg</span>
             <span class="project-tag">SIH26166</span>
           </div>
-          <span class="brand-sub">Align &bull; Analyze &bull; Explore</span>
+          <span class="brand-sub">ISRO Chandrayaan-2 &bull; NASA LROC</span>
         </div>
       </div>
       <div class="header-separator"></div>
       <div class="header-title-block">
-        <h1>Scientific Lunar Image Registration System</h1>
-        <p class="subtitle">Multi-Sensor Lunar Image Alignment &amp; Scientific Validation</p>
+        <h1>Dynamic Lunar Data Ingestion &amp; Registration Platform</h1>
+        <p class="subtitle">Multi-Sensor Planetary Alignment &bull; Geometric Verification &bull; Scientific Evaluation</p>
       </div>
     </div>
 
     <div class="header-right">
-      <!-- Live Real Backend Health Indicator -->
+      <!-- Theme Switcher (Light / Dark Mode) -->
+      <button type="button" id="btn-toggle-theme" class="btn-theme-toggle" title="Toggle Light / Dark Mode">
+        <span class="theme-icon-sun">&#x2600; Light</span>
+        <span class="theme-icon-moon" style="display: none;">&#x1F319; Dark</span>
+      </button>
+
+      <!-- Data Mode Indicator Badge -->
+      <div class="data-mode-badge" id="header-data-mode-badge" title="Active Operating Mode">
+        <span class="mode-led" id="mode-led-indicator"></span>
+        <span class="mode-label" id="header-data-mode-text">DATA_MODE = LOCAL</span>
+      </div>
+
+      <!-- Live Backend Health Indicator -->
       <div class="system-status-pill" id="header-status-pill" title="Real Backend Health State">
         <span class="status-pulse-dot" id="header-status-dot"></span>
-        <span class="status-label" id="header-status-text">CONNECTING...</span>
+        <span class="status-label" id="header-status-text">ONLINE</span>
       </div>
 
-      <!-- Sync Info -->
-      <div class="sync-info" id="header-sync-info" title="Last Synchronization">
-        <span class="sync-icon">&#x21bb;</span>
-        <span class="sync-time" id="header-sync-time">Just now</span>
-      </div>
-
-      <!-- Auto Refresh Toggle -->
-      <label class="toggle-control" title="Toggle Auto-Refresh every 5s">
+      <!-- Live Sync Toggle -->
+      <label class="toggle-control" title="Toggle Auto-Refresh">
         <input type="checkbox" id="toggle-auto-refresh" checked />
         <span class="toggle-slider"></span>
-        <span class="toggle-text">Live Auto-Sync</span>
+        <span class="toggle-text">Live Sync</span>
       </label>
 
-      <!-- Action Buttons -->
-      <button id="btn-refresh" class="btn btn-secondary" title="Refresh all experiment data" aria-label="Refresh Data">
+      <!-- Refresh Button -->
+      <button id="btn-refresh" class="btn btn-secondary" title="Sync runs and products" aria-label="Sync Data">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
         </svg>
-        <span>Refresh</span>
-      </button>
-
-      <button id="btn-open-run-modal" class="btn btn-primary" title="Launch new scientific experiment run" aria-label="Launch Experiment">
-        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
-          <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
-          <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
-          <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
-        </svg>
-        <span>New Experiment</span>
+        <span>Sync</span>
       </button>
     </div>
   </header>
 
   <!-- Application Body Layout: Sidebar + Main Content -->
   <div class="app-layout">
-    <!-- Left Compact Navigation Sidebar -->
-    <aside class="app-sidebar" role="navigation" aria-label="Main Navigation">
+    <!-- Left Collapsible Navigation Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar" role="navigation" aria-label="Main Navigation">
       <nav class="sidebar-nav">
-        <button class="nav-item active" data-view="dashboard" id="nav-dashboard">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
+        <button class="nav-item" data-view="dashboard" id="nav-dashboard" title="Dashboard">
+          <span class="nav-icon-rail">&#x1F3E0;</span>
           <span class="nav-label">Dashboard</span>
         </button>
 
-        <button class="nav-item" data-view="upload" id="nav-upload">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          <span class="nav-label">Upload &amp; Register</span>
+        <button class="nav-item active" data-view="ingestion" id="nav-ingestion" title="Data Acquisition">
+          <span class="nav-icon-rail">&#x1F4C1;</span>
+          <span class="nav-label">Data Acquisition</span>
         </button>
 
-        <button class="nav-item" data-view="experiments" id="nav-experiments">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10 2v7.31"></path>
-            <path d="M14 9.3V1.99"></path>
-            <path d="M8.5 2h7"></path>
-            <path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>
-            <path d="M5.52 16h12.96"></path>
-          </svg>
-          <span class="nav-label">Experiments</span>
-          <span class="nav-badge" id="nav-badge-runs-count">0</span>
+        <button class="nav-item" data-view="registration" id="nav-registration" title="Registration Jobs">
+          <span class="nav-icon-rail">&#x1F52C;</span>
+          <span class="nav-label">Registration Jobs</span>
+          <span class="nav-live-dot" id="nav-job-live-dot" style="display: none;"></span>
         </button>
 
-        <button class="nav-item" data-view="results" id="nav-results">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          <span class="nav-label">Results</span>
+        <button class="nav-item" data-view="results" id="nav-results" title="Results &amp; Metrics">
+          <span class="nav-icon-rail">&#x1F4CA;</span>
+          <span class="nav-label">Results &amp; Metrics</span>
         </button>
 
-        <button class="nav-item" data-view="visualizations" id="nav-visualizations">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
+        <button class="nav-item" data-view="reports" id="nav-reports" title="Scientific Reports">
+          <span class="nav-icon-rail">&#x1F4C4;</span>
+          <span class="nav-label">Scientific Reports</span>
+        </button>
+
+        <button class="nav-item" data-view="visualizations" id="nav-visualizations" title="Visualizations Gallery">
+          <span class="nav-icon-rail">&#x1F9EA;</span>
           <span class="nav-label">Visualizations</span>
         </button>
 
-        <button class="nav-item" data-view="evidence" id="nav-evidence">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          <span class="nav-label">Scientific Evidence</span>
+        <button class="nav-item" data-view="control-points" id="nav-control-points" title="Control Points">
+          <span class="nav-icon-rail">&#x1F3AF;</span>
+          <span class="nav-label">Control Points</span>
         </button>
 
-        <button class="nav-item" data-view="system" id="nav-system">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-          </svg>
-          <span class="nav-label">System Status</span>
+        <button class="nav-item" data-view="experiments" id="nav-experiments" title="Run History">
+          <span class="nav-icon-rail">&#x1F4DA;</span>
+          <span class="nav-label">Run History</span>
+          <span class="nav-badge" id="nav-badge-runs-count">0</span>
         </button>
 
-        <button class="nav-item" data-view="settings" id="nav-settings">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span class="nav-label">Settings</span>
+        <button class="nav-item" data-view="benchmarks" id="nav-benchmarks" title="Benchmark Suite">
+          <span class="nav-icon-rail">&#x1F4C8;</span>
+          <span class="nav-label">Benchmarks</span>
+        </button>
+
+        <button class="nav-item" data-view="system" id="nav-system" title="System State">
+          <span class="nav-icon-rail">&#x2699;</span>
+          <span class="nav-label">System State</span>
         </button>
       </nav>
 
-      <!-- Sidebar Footer Aesthetic Box -->
+      <!-- Sidebar Footer -->
       <div class="sidebar-footer">
         <div class="lunar-illustration">
           <div class="lunar-crescent"></div>
         </div>
-        <p class="footer-motto">Better alignment for a <strong>clearer view</strong> of the Moon</p>
-        <span class="footer-footnote">Chandrayaan-2 &bull; ISRO Inspired</span>
+        <p class="footer-motto">Multimodal Lunar Registration &bull; <strong>Real Data Operations</strong></p>
+        <span class="footer-footnote">ISRO Chandrayaan-2 &bull; NASA LRO</span>
       </div>
     </aside>
 
@@ -179,788 +186,563 @@
     <main class="app-workspace" id="main-workspace" role="main">
       
       <!-- ==================================================== -->
-      <!-- VIEW: DASHBOARD (Primary Overview Screen)             -->
+      <!-- VIEW 1: DATA ACQUISITION (MODE A & MODE B)           -->
       <!-- ==================================================== -->
-      <section class="view-panel active" id="view-dashboard">
-        <!-- Hero Header & Active Experiment Selection -->
+      <section class="view-panel active" id="view-ingestion">
+        
+        <!-- Primary Acquisition Mode Tabs -->
+        <div class="data-source-selector-card">
+          <div class="source-selector-header">
+            <div class="source-header-titles">
+              <span class="step-tag">Step 1</span>
+              <h2>Lunar Data Acquisition &bull; Choose Operational Mode</h2>
+            </div>
+            <div class="current-mode-pill">
+              <span>Operating Mode:</span>
+              <strong id="active-mode-display" class="font-mono text-cyan">MODE A — Local Computer Upload</strong>
+            </div>
+          </div>
+
+          <div class="mode-options-grid">
+            <!-- Mode A Option Card -->
+            <label class="mode-card active" id="card-mode-a">
+              <input type="radio" name="ingestion-data-source-mode" value="mode_a" checked />
+              <div class="mode-card-content">
+                <div class="mode-card-top">
+                  <div class="mode-icon-circle bg-blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  </div>
+                  <span class="mode-badge badge-recommended">MODE A</span>
+                </div>
+                <h3>MODE A — Local Data Upload</h3>
+                <p>Upload real lunar products directly from your computer (ZIP archives, PDS3/4, GeoTIFF, ENVI with metadata).</p>
+                <div class="mode-meta-tags">
+                  <span>SHA-256 Validation</span>
+                  <span>Sensor Auto-Detect</span>
+                  <span>Direct PC Upload</span>
+                </div>
+              </div>
+            </label>
+
+            <!-- Mode B Option Card -->
+            <label class="mode-card" id="card-mode-b">
+              <input type="radio" name="ingestion-data-source-mode" value="mode_b" />
+              <div class="mode-card-content">
+                <div class="mode-card-top">
+                  <div class="mode-icon-circle bg-purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                  </div>
+                  <span class="mode-badge badge-archive">MODE B</span>
+                </div>
+                <h3>MODE B — Remote Lunar Data Acquisition</h3>
+                <p>Search authoritative lunar catalogues by Latitude/Longitude or Region Name (Shackleton, Apollo 11, etc.).</p>
+                <div class="mode-meta-tags">
+                  <span>NASA ODE / PDS</span>
+                  <span>ISRO PRADAN</span>
+                  <span>Metadata-First Cache</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- DYNAMIC WORKFLOW PANELS -->
+        <div id="dynamic-workflow-container">
+          
+          <!-- ==================================================== -->
+          <!-- MODE A WORKFLOW: LOCAL UPLOAD, QUALITY & PAIRING     -->
+          <!-- ==================================================== -->
+          <div class="mode-workflow-panel active" id="workflow-panel-mode-a">
+            <div class="ingestion-split-grid">
+              
+              <!-- Left Column: Upload Dropzone & Metadata -->
+              <div class="ingestion-left-col">
+                <div class="card-section upload-control-box">
+                  <div class="card-section-header">
+                    <span class="step-badge">Step 2</span>
+                    <h3>Upload Local Lunar Image Products</h3>
+                    <div class="upload-type-selector">
+                      <label><input type="radio" name="upload-type" value="single" checked /> Single</label>
+                      <label><input type="radio" name="upload-type" value="multi" /> Multi</label>
+                      <label><input type="radio" name="upload-type" value="zip" /> ZIP Archive</label>
+                    </div>
+                  </div>
+
+                  <!-- Drag & Drop Zone -->
+                  <div class="real-upload-dropzone" id="real-upload-dropzone" tabindex="0">
+                    <input type="file" id="real-file-input" class="hidden-file-input" accept=".zip,.lbl,.xml,.hdr,.img,.tif,.tiff,.png,.jpg,.fits,.jp2" multiple />
+                    <div class="dropzone-inner">
+                      <div class="drop-icon-cloud">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      </div>
+                      <div class="drop-text-content">
+                        <strong>Drag &amp; Drop Lunar Files or ZIP Archive from your Computer</strong>
+                        <span>or click to browse local filesystem</span>
+                      </div>
+                      <div class="file-browse-btn-row">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-browse-computer">Select Files from Computer</button>
+                      </div>
+                      <span class="supported-formats-text">Supported Formats: .zip, .lbl, .xml, .hdr, .img, .tif, .tiff, .jp2, .fits</span>
+                    </div>
+                  </div>
+
+                  <!-- Real-time Upload & Ingestion Progress -->
+                  <div class="upload-progress-container" id="upload-progress-box" style="display: none;">
+                    <div class="progress-file-info">
+                      <div class="prog-file-details">
+                        <span class="prog-filename" id="prog-filename">ch2_ohrc_orbital_product.zip</span>
+                        <span class="prog-filesize" id="prog-filesize">0 MB / 0 MB</span>
+                      </div>
+                      <span class="prog-percentage font-mono text-cyan" id="prog-percent-text">0%</span>
+                    </div>
+                    <div class="prog-bar-track">
+                      <div class="prog-bar-fill" id="prog-bar-fill" style="width: 0%;"></div>
+                    </div>
+
+                    <!-- Step-by-Step Validation Checklist -->
+                    <div class="ingestion-checklist" id="ingestion-checklist">
+                      <div class="check-step" id="chk-upload"><span class="chk-icon">&#x25CB;</span> <span class="chk-label">1. Uploading file to backend</span></div>
+                      <div class="check-step" id="chk-sha"><span class="chk-icon">&#x25CB;</span> <span class="chk-label">2. Calculating SHA-256 checksum &amp; duplicate check</span></div>
+                      <div class="check-step" id="chk-archive"><span class="chk-icon">&#x25CB;</span> <span class="chk-label">3. Archive integrity validation &amp; extraction</span></div>
+                      <div class="check-step" id="chk-format"><span class="chk-icon">&#x25CB;</span> <span class="chk-label">4. Format detection (PDS3 / PDS4 / ENVI / GeoTIFF)</span></div>
+                      <div class="check-step" id="chk-sensor"><span class="chk-icon">&#x25CB;</span> <span class="chk-label">5. Sensor identification &amp; quality check</span></div>
+                      <div class="check-step" id="chk-meta"><span class="chk-icon">&#x25CB;</span> <span class="chk-label">6. Geodetic coordinates &amp; footprint extraction</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Sensor Selector with Auto-Detect -->
+                  <div class="sensor-selector-wrapper">
+                    <div class="sensor-group">
+                      <label for="sensor-source-select">Source Sensor:</label>
+                      <select id="sensor-source-select" class="form-control font-mono">
+                        <option value="AUTO_DETECT" selected>Auto Detect (Recommended)</option>
+                        <option value="OHRC">OHRC (Chandrayaan-2 High-Res 0.25m)</option>
+                        <option value="TMC-2">TMC-2 (Chandrayaan-2 Stereo 5.0m)</option>
+                        <option value="IIRS">IIRS (Chandrayaan-2 Hyperspectral 20.0m)</option>
+                        <option value="LROC">LROC NAC (LRO Narrow Angle 0.5m)</option>
+                      </select>
+                      <span class="sensor-detected-pill" id="source-detected-tag" style="display: none;">
+                        Detected: <strong id="detected-sensor-name">OHRC</strong> (<span id="detected-sensor-conf">99%</span> conf)
+                      </span>
+                    </div>
+
+                    <div class="sensor-group">
+                      <label for="sensor-ref-select">Reference Sensor:</label>
+                      <select id="sensor-ref-select" class="form-control font-mono">
+                        <option value="LROC" selected>LROC NAC (NASA Reference Baseline)</option>
+                        <option value="OHRC">OHRC (Chandrayaan-2 High-Res)</option>
+                        <option value="TMC-2">TMC-2 (Chandrayaan-2 Base)</option>
+                        <option value="IIRS">IIRS (Chandrayaan-2 Spectral)</option>
+                        <option value="AUTO_DETECT">Auto Detect</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ingested Product Metadata Card -->
+                <div class="card-section product-card-section" id="ingested-product-card" style="display: none;">
+                  <div class="card-section-header">
+                    <span class="step-badge">Product</span>
+                    <h3 id="card-product-title">Validated Lunar Product Record</h3>
+                    <span class="status-pill status-success" id="card-product-status">READY</span>
+                  </div>
+                  <div class="product-metadata-grid">
+                    <div class="p-meta-item"><span class="pm-k">Product ID:</span> <span class="pm-v font-mono text-cyan" id="card-prod-id">--</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Sensor:</span> <span class="pm-v font-mono text-amber" id="card-prod-sensor">--</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Mission:</span> <span class="pm-v" id="card-prod-mission">Chandrayaan-2</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Region:</span> <span class="pm-v" id="card-prod-region">R01</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Spatial GSD:</span> <span class="pm-v font-mono text-emerald" id="card-prod-gsd">0.25 m/px</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Latitude:</span> <span class="pm-v font-mono" id="card-prod-lat">-89.90°</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Longitude:</span> <span class="pm-v font-mono" id="card-prod-lon">0.00°</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Dimensions:</span> <span class="pm-v font-mono" id="card-prod-dims">2048 &times; 2048 px</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Bit Depth:</span> <span class="pm-v font-mono" id="card-prod-bits">16-bit</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Quality Check:</span> <span class="pm-v text-emerald" id="card-prod-qc">PASS (Valid Radiometry)</span></div>
+                    <div class="p-meta-item"><span class="pm-k">Footprint:</span> <span class="pm-v text-cyan" id="card-prod-footprint">GeoJSON Polygon Available</span></div>
+                    <div class="p-meta-item"><span class="pm-k">SHA-256 Checksum:</span> <span class="pm-v font-mono text-muted text-xs" id="card-prod-sha">--</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Region, Lunar Map & Pairing -->
+              <div class="ingestion-right-col">
+                <div class="card-section geographic-selection-box">
+                  <div class="card-section-header">
+                    <span class="step-badge">Step 3</span>
+                    <h3>Lunar Region &amp; Coordinates</h3>
+                    <div class="roi-mode-tabs">
+                      <button type="button" class="roi-tab-btn active" id="tab-predefined-region">Predefined Region</button>
+                      <button type="button" class="roi-tab-btn" id="tab-custom-roi">Custom Coordinates</button>
+                    </div>
+                  </div>
+
+                  <!-- Predefined Regions Dropdown -->
+                  <div id="predefined-region-container">
+                    <div class="form-group">
+                      <label for="predefined-region-select">Select Target Lunar Exploration Region:</label>
+                      <select id="predefined-region-select" class="form-control">
+                        <option value="R01" selected>R01 — Shackleton Crater (-89.90°, 0.00°)</option>
+                        <option value="R02">R02 — Faustini / Malapert Mountain (-84.90°, 12.90°)</option>
+                        <option value="R03">R03 — South Pole-Aitken Basin (-53.00°, 169.00°)</option>
+                        <option value="R04">R04 — Apollo 11 Landing Site (0.67°, 23.47°)</option>
+                        <option value="R05">R05 — Aristarchus Plateau (23.70°, -47.40°)</option>
+                        <option value="R06">R06 — Tycho Crater (-43.31°, -11.36°)</option>
+                        <option value="R07">R07 — Reiner Gamma (7.50°, -59.00°)</option>
+                        <option value="R08">R08 — Copernicus Crater (9.62°, -20.08°)</option>
+                        <option value="R09">R09 — Mare Crisium (17.00°, 59.10°)</option>
+                        <option value="R10">R10 — Oceanus Procellarum (18.40°, -57.40°)</option>
+                      </select>
+                      <span class="form-hint" id="predefined-region-desc">High-priority lunar south pole crater rim with permanent shadow and extreme illumination gradients.</span>
+                    </div>
+                  </div>
+
+                  <!-- Custom Coordinates Inputs -->
+                  <div id="custom-roi-container" style="display: none;">
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label for="input-custom-lat">Latitude [-90.0° to +90.0°]:</label>
+                        <input type="number" id="input-custom-lat" class="form-control font-mono" step="0.0001" min="-90" max="90" value="-89.9000" />
+                        <span class="coord-error-msg" id="lat-error-msg" style="display: none;">Invalid latitude</span>
+                      </div>
+                      <div class="form-group">
+                        <label for="input-custom-lon">Longitude [-180.0° to +180.0°]:</label>
+                        <input type="number" id="input-custom-lon" class="form-control font-mono" step="0.0001" min="-180" max="180" value="0.0000" />
+                        <span class="coord-error-msg" id="lon-error-msg" style="display: none;">Invalid longitude</span>
+                      </div>
+                    </div>
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label for="input-custom-radius">Search Radius (km):</label>
+                        <input type="number" id="input-custom-radius" class="form-control font-mono" min="1" max="100" value="15" />
+                      </div>
+                      <div class="form-group">
+                        <label for="input-custom-region-name">ROI Region Label:</label>
+                        <input type="text" id="input-custom-region-name" class="form-control" value="Custom Lunar ROI" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Interactive Canvas Lunar Surface Map -->
+                  <div class="lunar-map-wrapper">
+                    <div class="lunar-map-header">
+                      <span class="lunar-map-title">Interactive Lunar Surface Map &bull; Click to set ROI</span>
+                      <span class="lunar-coords-badge font-mono" id="map-coords-badge">Lat: -89.9000° &bull; Lon: 0.0000°</span>
+                    </div>
+                    <div class="lunar-canvas-stage" id="lunar-canvas-stage">
+                      <canvas id="lunar-interactive-canvas" width="600" height="240"></canvas>
+                      <div class="map-controls-overlay">
+                        <button type="button" class="map-btn" id="btn-map-zoom-in" title="Zoom In">+</button>
+                        <button type="button" class="map-btn" id="btn-map-zoom-out" title="Zoom Out">&minus;</button>
+                        <button type="button" class="map-btn" id="btn-map-reset" title="Reset View">Reset</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Sensor Availability Matrix -->
+                  <div class="sensor-matrix-box">
+                    <div class="matrix-header">
+                      <h4>Sensor Availability Matrix for Selected ROI</h4>
+                      <span class="matrix-tag">Active Catalog Query</span>
+                    </div>
+                    <table class="sensor-matrix-table" id="sensor-matrix-table">
+                      <thead>
+                        <tr>
+                          <th>Region / ROI</th>
+                          <th>OHRC (0.25m)</th>
+                          <th>TMC-2 (5.0m)</th>
+                          <th>IIRS (20.0m)</th>
+                          <th>LROC NAC (0.5m)</th>
+                        </tr>
+                      </thead>
+                      <tbody id="sensor-matrix-tbody">
+                        <tr>
+                          <td class="font-mono">R01 (Shackleton)</td>
+                          <td class="cell-status status-avail">&#x2713; Available</td>
+                          <td class="cell-status status-avail">&#x2713; Available</td>
+                          <td class="cell-status status-avail">&#x2713; Available</td>
+                          <td class="cell-status status-avail">&#x2713; Available</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Cross-Sensor Registration Pairing Box -->
+                  <div class="pairing-control-box">
+                    <div class="pairing-header">
+                      <span class="step-badge">Step 4</span>
+                      <h3>Cross-Sensor Registration Pairing</h3>
+                    </div>
+                    <div class="pairing-cards-grid">
+                      <div class="pair-card source-card">
+                        <span class="pair-type-tag">SOURCE MODALITY</span>
+                        <h4 id="pair-source-title">Chandrayaan-2 OHRC</h4>
+                        <div class="pair-stats font-mono">
+                          <span>GSD: 0.25 m</span>
+                          <span>Product: ch2_ohrc_orbital_product</span>
+                        </div>
+                      </div>
+                      <div class="pair-link-symbol">&#x21C4;</div>
+                      <div class="pair-card ref-card">
+                        <span class="pair-type-tag">REFERENCE BASELINE</span>
+                        <h4 id="pair-ref-title">NASA LROC NAC</h4>
+                        <div class="pair-stats font-mono">
+                          <span>GSD: 0.50 m</span>
+                          <span>Product: lroc_nac_reference_product</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="pairing-metrics-bar">
+                      <div class="pm-metric">
+                        <span class="pm-label">Common Overlap:</span>
+                        <strong class="font-mono text-cyan" id="pair-overlap-val">93.8%</strong>
+                      </div>
+                      <div class="pm-metric">
+                        <span class="pm-label">Terrain Suitability:</span>
+                        <strong class="font-mono text-emerald" id="pair-terrain-val">0.88 (Optimal)</strong>
+                      </div>
+                      <div class="pm-metric">
+                        <span class="pm-label">Pair Status:</span>
+                        <strong class="text-emerald font-mono" id="pair-status-val">READY FOR REGISTRATION</strong>
+                      </div>
+                    </div>
+
+                    <div class="pairing-action-row">
+                      <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-trigger-real-registration">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <span>START 12-STAGE REGISTRATION PIPELINE</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ==================================================== -->
+          <!-- MODE B WORKFLOW: REMOTE REGION SEARCH & DISCOVERY     -->
+          <!-- ==================================================== -->
+          <div class="mode-workflow-panel" id="workflow-panel-mode-b" style="display: none;">
+            <div class="card-section remote-discovery-card">
+              <div class="card-section-header">
+                <h3>Remote Lunar Data Acquisition (Mode B)</h3>
+                <span class="card-tag">NASA ODE &bull; NASA LROC PDS &bull; ISRO PRADAN</span>
+              </div>
+              
+              <!-- Search Method Selector -->
+              <div class="remote-search-methods">
+                <span class="r-search-label">Search Method:</span>
+                <div class="r-search-radios">
+                  <label><input type="radio" name="remote-search-type" value="coords" checked /> Latitude / Longitude</label>
+                  <label><input type="radio" name="remote-search-type" value="region_name" /> Region Name</label>
+                  <label><input type="radio" name="remote-search-type" value="region_id" /> Region ID (R01-R10)</label>
+                </div>
+              </div>
+
+              <!-- Search Form Grid -->
+              <div class="remote-search-form-grid">
+                <!-- Coordinates Inputs -->
+                <div class="remote-search-group" id="group-remote-coords">
+                  <div class="form-row-2">
+                    <div class="form-group">
+                      <label for="remote-input-lat">Latitude [-90.0° to +90.0°]:</label>
+                      <input type="number" id="remote-input-lat" class="form-control font-mono" step="0.0001" value="-89.9000" />
+                    </div>
+                    <div class="form-group">
+                      <label for="remote-input-lon">Longitude [-180.0° to +180.0°]:</label>
+                      <input type="number" id="remote-input-lon" class="form-control font-mono" step="0.0001" value="0.0000" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Region Name Input -->
+                <div class="remote-search-group" id="group-remote-region-name" style="display: none;">
+                  <div class="form-group">
+                    <label for="remote-input-region-name">Region Name (e.g., Shackleton Crater, Apollo 11 Landing Site):</label>
+                    <input type="text" id="remote-input-region-name" class="form-control" placeholder="Shackleton Crater" value="Shackleton Crater" />
+                  </div>
+                </div>
+
+                <!-- Region ID Dropdown -->
+                <div class="remote-search-group" id="group-remote-region-id" style="display: none;">
+                  <div class="form-group">
+                    <label for="remote-select-region-id">Region ID:</label>
+                    <select id="remote-select-region-id" class="form-control">
+                      <option value="R01">R01 — Shackleton Crater (-89.90°, 0.00°)</option>
+                      <option value="R02">R02 — Faustini / Malapert (-84.90°, 12.90°)</option>
+                      <option value="R03">R03 — South Pole-Aitken Basin (-53.00°, 169.00°)</option>
+                      <option value="R04">R04 — Apollo 11 Landing Site (0.67°, 23.47°)</option>
+                      <option value="R05">R05 — Aristarchus Plateau (23.70°, -47.40°)</option>
+                      <option value="R06">R06 — Tycho Crater (-43.31°, -11.36°)</option>
+                      <option value="R07">R07 — Reiner Gamma (7.50°, -59.00°)</option>
+                      <option value="R08">R08 — Copernicus Crater (9.62°, -20.08°)</option>
+                      <option value="R09">R09 — Mare Crisium (17.00°, 59.10°)</option>
+                      <option value="R10">R10 — Oceanus Procellarum (18.40°, -57.40°)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="form-row-3">
+                  <div class="form-group">
+                    <label for="remote-archive-provider-select">Archive Provider:</label>
+                    <select id="remote-archive-provider-select" class="form-control">
+                      <option value="ALL">All Active Providers</option>
+                      <option value="ISRO_PRADAN">ISRO ISSDC / PRADAN (Chandrayaan-2)</option>
+                      <option value="NASA_ODE">NASA Orbital Data Explorer (ODE)</option>
+                      <option value="LROC_PDS">NASA LROC PDS Archive</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="remote-sensor-select">Target Sensor:</label>
+                    <select id="remote-sensor-select" class="form-control">
+                      <option value="">All Sensors (OHRC, TMC-2, IIRS, LROC)</option>
+                      <option value="OHRC">OHRC (0.25m)</option>
+                      <option value="TMC-2">TMC-2 (5.0m)</option>
+                      <option value="IIRS">IIRS (20.0m)</option>
+                      <option value="LROC">LROC NAC (0.5m)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="remote-max-gsd">Max GSD (m):</label>
+                    <input type="number" id="remote-max-gsd" class="form-control font-mono" value="5.0" step="0.1" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Search Button Row -->
+              <div class="remote-action-row">
+                <button type="button" class="btn btn-primary" id="btn-search-remote-archives">
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>SEARCH REMOTE LUNAR CATALOGUES</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="btn-auto-select-pair" style="display: none;">
+                  <span>Auto-Select Best Overlapping Pair</span>
+                </button>
+              </div>
+
+              <!-- Error Box for Remote Unavailable -->
+              <div id="remote-error-box" class="remote-error-banner" style="display: none;">
+                <div class="err-badge">REMOTE_SOURCE_UNAVAILABLE</div>
+                <p id="remote-error-message">The requested remote lunar catalogue endpoint is currently unavailable.</p>
+              </div>
+
+              <!-- Remote Search Results -->
+              <div class="remote-results-container" id="remote-results-container">
+                <div class="remote-results-header">
+                  <h4>Discovered Remote Products (<span id="remote-count-num">0</span>)</h4>
+                  <span class="remote-hint">Select a product to cache its windowed ROI and proceed to registration.</span>
+                </div>
+                <div class="remote-products-cards-grid" id="remote-products-cards-grid">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VIEW 2: 12-STAGE REGISTRATION JOBS MONITOR           -->
+      <!-- ==================================================== -->
+      <section class="view-panel" id="view-registration">
+        <!-- Hero Header -->
         <div class="hero-banner">
           <div class="hero-text-block">
             <div class="welcome-line">
-              <h2>Welcome, Researcher <span class="wave-emoji">&#x1F315;</span></h2>
-              <span class="run-selector-container">
-                <label for="active-run-select">Active Run:</label>
-                <select id="active-run-select" class="run-select-dropdown" aria-label="Select Active Experiment Run">
-                  <option value="">Loading experiment runs...</option>
-                </select>
-              </span>
+              <h2>Registration Pipeline Live Monitor <span class="wave-emoji">&#x1F315;</span></h2>
+              <span class="job-id-pill font-mono" id="hero-job-id-badge">JOB_ID: --</span>
             </div>
-            <h3 class="hero-title" id="hero-experiment-title">Lunar Image Registration System</h3>
-            <p class="hero-sub" id="hero-experiment-sub">Multi-sensor alignment &bull; Precise registration &bull; Scientific validation</p>
+            <h3 class="hero-title" id="hero-experiment-title">Multimodal Planetary Alignment Engine</h3>
+            <p class="hero-sub" id="hero-experiment-sub">12-Stage State Machine &bull; Real Stage Tracking &bull; Zero Silent Fallback</p>
           </div>
 
           <div class="hero-status-block">
             <div class="active-badge-group">
-              <span class="scenario-pill" id="hero-scenario-pill">SCENARIO: COMBINED</span>
-              <span class="status-pill status-success" id="hero-status-pill">SUCCESS</span>
+              <span class="scenario-pill" id="hero-data-mode-pill">DATA_MODE: LOCAL</span>
+              <span class="status-pill status-idle" id="hero-status-pill">IDLE</span>
             </div>
             <div class="hero-meta-grid">
+              <div class="meta-item"><span class="meta-k">Source:</span> <span class="meta-v" id="hero-meta-source">OHRC</span></div>
+              <div class="meta-item"><span class="meta-k">Reference:</span> <span class="meta-v" id="hero-meta-ref">LROC</span></div>
+              <div class="meta-item"><span class="meta-k">Region:</span> <span class="meta-v" id="hero-meta-region">R01</span></div>
               <div class="meta-item"><span class="meta-k">Detector:</span> <span class="meta-v" id="hero-meta-detector">SIFT</span></div>
-              <div class="meta-item"><span class="meta-k">Geometry:</span> <span class="meta-v" id="hero-meta-geometry">HOMOGRAPHY</span></div>
-              <div class="meta-item"><span class="meta-k">Seed:</span> <span class="meta-v" id="hero-meta-seed">42</span></div>
-              <div class="meta-item"><span class="meta-k">Sub-Pixel:</span> <span class="meta-v" id="hero-meta-subpixel">ENABLED</span></div>
             </div>
           </div>
         </div>
 
-        <!-- Real Computed KPI Area (Top KPI Area) -->
-        <section class="kpi-section" aria-label="Key Performance Indicators">
-          <div class="kpi-grid">
-            <!-- 1. Total Experiments -->
-            <div class="kpi-card" id="kpi-total-exp">
-              <div class="kpi-top">
-                <span class="kpi-title">Total Experiments</span>
-                <div class="kpi-icon-wrap icon-blue">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.31M14 9.3V1.99M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0M5.52 16h12.96"></path></svg>
-                </div>
+        <!-- 12-Stage Scientific Stepper Card -->
+        <div class="card-section pipeline-stepper-card">
+          <div class="card-section-header">
+            <h3>12-Stage Registration Execution State</h3>
+            <div class="pipeline-progress-meta">
+              <span class="font-mono text-cyan" id="pipeline-progress-pct">0%</span>
+              <div class="pipeline-live-indicator" id="pipeline-status-tag">
+                <span class="mini-dot"></span>
+                <span id="pipeline-status-label">IDLE</span>
               </div>
-              <div class="kpi-val" id="kpi-val-total">--</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-total">All recorded runs</span></div>
-            </div>
-
-            <!-- 2. Successful Registrations -->
-            <div class="kpi-card" id="kpi-success-exp">
-              <div class="kpi-top">
-                <span class="kpi-title">Successful Runs</span>
-                <div class="kpi-icon-wrap icon-emerald">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-              </div>
-              <div class="kpi-val text-emerald" id="kpi-val-success">--</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-success">Convergence passed</span></div>
-            </div>
-
-            <!-- 3. Failed Registrations -->
-            <div class="kpi-card" id="kpi-failed-exp">
-              <div class="kpi-top">
-                <span class="kpi-title">Failed Runs</span>
-                <div class="kpi-icon-wrap icon-rose">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </div>
-              </div>
-              <div class="kpi-val text-rose" id="kpi-val-failed">--</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-failed">Unregistered</span></div>
-            </div>
-
-            <!-- 4. Average Reprojection RMSE -->
-            <div class="kpi-card" id="kpi-avg-rmse">
-              <div class="kpi-top">
-                <span class="kpi-title">Avg. Reprojection RMSE</span>
-                <div class="kpi-icon-wrap icon-cyan">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
-                </div>
-              </div>
-              <div class="kpi-val font-mono" id="kpi-val-rmse">-- px</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-rmse">Target &lt; 1.0 px</span></div>
-            </div>
-
-            <!-- 5. Average Inlier Ratio -->
-            <div class="kpi-card" id="kpi-avg-inlier">
-              <div class="kpi-top">
-                <span class="kpi-title">Avg. Inlier Ratio</span>
-                <div class="kpi-icon-wrap icon-violet">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </div>
-              </div>
-              <div class="kpi-val font-mono text-violet" id="kpi-val-inlier">--%</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-inlier">RANSAC / MAGSAC</span></div>
-            </div>
-
-            <!-- 6. Average Spatial Coverage -->
-            <div class="kpi-card" id="kpi-avg-coverage">
-              <div class="kpi-top">
-                <span class="kpi-title">Avg. Spatial Coverage</span>
-                <div class="kpi-icon-wrap icon-amber">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
-                </div>
-              </div>
-              <div class="kpi-val font-mono text-amber" id="kpi-val-coverage">--%</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-coverage">8&times;8 Grid Partition</span></div>
-            </div>
-
-            <!-- 7. Best Registration Quality -->
-            <div class="kpi-card" id="kpi-best-quality">
-              <div class="kpi-top">
-                <span class="kpi-title">Best Quality Score</span>
-                <div class="kpi-icon-wrap icon-cyan">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                </div>
-              </div>
-              <div class="kpi-val font-mono text-cyan" id="kpi-val-best-quality">--</div>
-              <div class="kpi-sub" id="kpi-sub-best-quality">Normalized Composite</div>
-            </div>
-
-            <!-- 8. Active Processing Runs -->
-            <div class="kpi-card" id="kpi-active-jobs">
-              <div class="kpi-top">
-                <span class="kpi-title">Active Runs</span>
-                <div class="kpi-icon-wrap icon-emerald">
-                  <div class="pulsing-radar"></div>
-                </div>
-              </div>
-              <div class="kpi-val font-mono" id="kpi-val-active">0</div>
-              <div class="kpi-sub"><span class="sub-highlight" id="kpi-sub-active">Async Workers</span></div>
             </div>
           </div>
-        </section>
 
-        <!-- Scientific Dashboard Main Grid (Cards 1 to 8) -->
-        <div class="dashboard-grid">
-          
-          <!-- TOP ROW: Card 1 (Upload/Configure) + Card 2 (Pipeline & Logs) + Card 3 (Results & Quality) -->
-          <div class="grid-row-top">
-            
-            <!-- CARD 1: Upload & Register Images -->
-            <section class="dash-card card-upload" id="card-upload-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">1</span>
-                  <h3>Upload &amp; Register Images</h3>
-                </div>
-                <button class="card-action-btn" id="btn-quick-config" title="Open Experiment Configurator">&#x2699;</button>
-              </div>
-              <div class="card-body">
-                <p class="card-desc">Upload multi-sensor lunar images or trigger controlled synthetic orbital validation scenarios.</p>
-
-                <!-- Drag & Drop Upload Zone -->
-                <div class="upload-dropzone" id="dropzone-trigger" tabindex="0" role="button" aria-label="Upload lunar images">
-                  <div class="drop-icon-cloud">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                  </div>
-                  <div class="drop-text">
-                    <strong>Drag &amp; drop images here</strong>
-                    <span>or <em class="browse-link">click to launch scenario</em></span>
-                  </div>
-                  <span class="supported-formats">Supported: .tif, .tiff, .jpg, .png, .jp2</span>
-                </div>
-
-                <!-- Sensor Checkboxes -->
-                <div class="sensor-select-section">
-                  <span class="sensor-title">Target Sensor Modalities:</span>
-                  <div class="sensor-chips">
-                    <label class="sensor-chip"><input type="checkbox" checked disabled /><span>OHRC</span></label>
-                    <label class="sensor-chip"><input type="checkbox" checked disabled /><span>TMC-2</span></label>
-                    <label class="sensor-chip"><input type="checkbox" checked disabled /><span>IIRS</span></label>
-                    <label class="sensor-chip"><input type="checkbox" checked disabled /><span>LROC</span></label>
-                    <label class="sensor-chip"><input type="checkbox" checked disabled /><span>Synthetic</span></label>
-                  </div>
-                </div>
-
-                <button class="btn btn-primary btn-block" id="btn-trigger-active-run">
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                  <span>Execute Registration Pipeline</span>
-                </button>
-              </div>
-            </section>
-
-            <!-- CARD 2: Registration Pipeline Progress & Terminal Logs -->
-            <section class="dash-card card-pipeline" id="card-pipeline-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">2</span>
-                  <h3>Registration Pipeline Progress</h3>
-                </div>
-                <div class="pipeline-live-indicator" id="pipeline-status-tag">
-                  <span class="mini-dot"></span>
-                  <span id="pipeline-status-label">IDLE</span>
-                </div>
-              </div>
-              <div class="card-body">
-                <!-- 8-Stage Horizontal Pipeline Timeline -->
-                <div class="pipeline-stepper" id="pipeline-stepper">
-                  <div class="step-node" data-stage="1" id="pipe-stage-1">
-                    <div class="step-circle"><span class="step-idx">1</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Ingestion</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-1"></div>
-                  <div class="step-node" data-stage="2" id="pipe-stage-2">
-                    <div class="step-circle"><span class="step-idx">2</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Preprocessing</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-2"></div>
-                  <div class="step-node" data-stage="3" id="pipe-stage-3">
-                    <div class="step-circle"><span class="step-idx">3</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Feature Ext.</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-3"></div>
-                  <div class="step-node" data-stage="4" id="pipe-stage-4">
-                    <div class="step-circle"><span class="step-idx">4</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Matching</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-4"></div>
-                  <div class="step-node" data-stage="5" id="pipe-stage-5">
-                    <div class="step-circle"><span class="step-idx">5</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Geometry</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-5"></div>
-                  <div class="step-node" data-stage="6" id="pipe-stage-6">
-                    <div class="step-circle"><span class="step-idx">6</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Refinement</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-6"></div>
-                  <div class="step-node" data-stage="7" id="pipe-stage-7">
-                    <div class="step-circle"><span class="step-idx">7</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Registration</span>
-                  </div>
-                  <div class="step-line" id="pipe-line-7"></div>
-                  <div class="step-node" data-stage="8" id="pipe-stage-8">
-                    <div class="step-circle"><span class="step-idx">8</span><span class="step-icon">&#x2713;</span></div>
-                    <span class="step-name">Evaluation</span>
-                  </div>
-                </div>
-
-                <!-- Processing Log Terminal -->
-                <div class="terminal-log-wrapper">
-                  <div class="terminal-header">
-                    <span class="terminal-title">Processing Log</span>
-                    <div class="terminal-actions">
-                      <label class="terminal-autoscroll">
-                        <input type="checkbox" id="log-autoscroll" checked />
-                        <span>Autoscroll</span>
-                      </label>
-                      <button class="terminal-copy-btn" id="btn-copy-log" title="Copy Log">Copy</button>
-                    </div>
-                  </div>
-                  <div class="terminal-body" id="processing-log-body">
-                    <div class="log-line text-muted">Awaiting experiment selection or trigger...</div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- CARD 3: Registration Results & Quality Score -->
-            <section class="dash-card card-results" id="card-results-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">3</span>
-                  <h3>Registration Results</h3>
-                </div>
-                <div class="result-status-pill" id="result-status-banner">
-                  <span class="status-icon">&#x2713;</span>
-                  <span id="result-status-title">Registration Successful!</span>
-                </div>
-              </div>
-              <div class="card-body">
-                <!-- Quality Score Circle & Scientific Metrics Grid -->
-                <div class="quality-score-hero">
-                  <!-- Circular SVG Quality Score Gauge -->
-                  <div class="gauge-container">
-                    <svg class="score-svg-gauge" viewBox="0 0 120 120">
-                      <circle class="gauge-bg" cx="60" cy="60" r="50" />
-                      <circle class="gauge-fill" id="gauge-score-fill" cx="60" cy="60" r="50" stroke-dasharray="314.159" stroke-dashoffset="60" />
-                    </svg>
-                    <div class="gauge-text-overlay">
-                      <span class="gauge-score-val" id="gauge-score-num">--</span>
-                      <span class="gauge-score-label" id="gauge-score-verdict">Optimal</span>
-                    </div>
-                  </div>
-
-                  <!-- Key Metric Pills -->
-                  <div class="results-metrics-grid">
-                    <div class="res-stat-row">
-                      <span class="stat-name">Inlier Ratio</span>
-                      <span class="stat-val font-mono" id="res-inlier-ratio">--%</span>
-                    </div>
-                    <div class="res-stat-row">
-                      <span class="stat-name">Reprojection RMSE</span>
-                      <span class="stat-val font-mono" id="res-rmse-px">-- px</span>
-                    </div>
-                    <div class="res-stat-row">
-                      <span class="stat-name">Normalized Cross-Corr (NCC)</span>
-                      <span class="stat-val font-mono" id="res-ncc-val">--</span>
-                    </div>
-                    <div class="res-stat-row">
-                      <span class="stat-name">Spatial Grid Coverage</span>
-                      <span class="stat-val font-mono" id="res-spatial-cov">--%</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Transformation Parameters (Estimated vs Ground Truth) -->
-                <div class="transform-params-card">
-                  <div class="params-header">
-                    <h4>Transformation Parameters</h4>
-                  </div>
-                  <table class="params-table" id="res-params-table">
-                    <tbody>
-                      <tr>
-                        <td class="param-name">Translation X</td>
-                        <td class="param-est font-mono" id="param-est-tx">--</td>
-                        <td class="param-gt font-mono" id="param-gt-tx">(Expected: --)</td>
-                        <td class="param-status" id="param-status-tx">&#x2713;</td>
-                      </tr>
-                      <tr>
-                        <td class="param-name">Translation Y</td>
-                        <td class="param-est font-mono" id="param-est-ty">--</td>
-                        <td class="param-gt font-mono" id="param-gt-ty">(Expected: --)</td>
-                        <td class="param-status" id="param-status-ty">&#x2713;</td>
-                      </tr>
-                      <tr>
-                        <td class="param-name">Rotation</td>
-                        <td class="param-est font-mono" id="param-est-rot">--&deg;</td>
-                        <td class="param-gt font-mono" id="param-gt-rot">(Expected: --&deg;)</td>
-                        <td class="param-status" id="param-status-rot">&#x2713;</td>
-                      </tr>
-                      <tr>
-                        <td class="param-name">Scale</td>
-                        <td class="param-est font-mono" id="param-est-scale">--&times;</td>
-                        <td class="param-gt font-mono" id="param-gt-scale">(Expected: --&times;)</td>
-                        <td class="param-status" id="param-status-scale">&#x2713;</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div class="results-action-row">
-                  <button class="btn btn-secondary btn-sm" id="btn-view-detailed-report">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span>View Scientific Details</span>
-                  </button>
-                  <button class="btn btn-primary btn-sm" id="btn-download-report">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Download Report</span>
-                  </button>
-                </div>
-              </div>
-            </section>
-
+          <!-- Master Progress Bar -->
+          <div class="prog-bar-track" style="margin-bottom: 20px;">
+            <div class="prog-bar-fill" id="pipeline-bar-fill" style="width: 0%;"></div>
           </div>
 
-          <!-- MIDDLE ROW: Card 4 (Registered Images Grid) + Card 5 (Interactive Visual Stage) -->
-          <div class="grid-row-mid">
-            
-            <!-- CARD 4: Registered Images -->
-            <section class="dash-card card-images" id="card-images-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">4</span>
-                  <h3>Registered Images</h3>
-                </div>
-                <span class="card-tag">Real Artifacts</span>
-              </div>
-              <div class="card-body">
-                <div class="registered-thumbnails-grid">
-                  <!-- Thumbnail 1: Source (OHRC) -->
-                  <div class="thumb-card" data-img="source">
-                    <div class="thumb-tag">Source (OHRC)</div>
-                    <div class="thumb-img-wrapper">
-                      <img id="thumb-img-source" src="" alt="Source Image" class="thumb-img" />
-                      <div class="thumb-overlay">
-                        <button class="thumb-btn" data-action="view" data-target="source" title="Inspect">View</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Thumbnail 2: Reference (TMC-2) -->
-                  <div class="thumb-card" data-img="reference">
-                    <div class="thumb-tag">Reference (TMC-2 / Base)</div>
-                    <div class="thumb-img-wrapper">
-                      <img id="thumb-img-reference" src="" alt="Reference Image" class="thumb-img" />
-                      <div class="thumb-overlay">
-                        <button class="thumb-btn" data-action="view" data-target="reference" title="Inspect">View</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Thumbnail 3: Registered (Warped Aligned) -->
-                  <div class="thumb-card" data-img="registered">
-                    <div class="thumb-tag">Registered (Warped)</div>
-                    <div class="thumb-img-wrapper">
-                      <img id="thumb-img-registered" src="" alt="Registered Warped Image" class="thumb-img" />
-                      <div class="thumb-overlay">
-                        <button class="thumb-btn" data-action="view" data-target="registered" title="Inspect">View</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Thumbnail 4: Difference Map -->
-                  <div class="thumb-card" data-img="difference">
-                    <div class="thumb-tag">Residual Difference</div>
-                    <div class="thumb-img-wrapper">
-                      <img id="thumb-img-difference" src="" alt="Residual Difference Map" class="thumb-img" />
-                      <div class="thumb-overlay">
-                        <button class="thumb-btn" data-action="view" data-target="difference" title="Inspect">View</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Aligned Result Thumbnail with Multi-Sensor Box Preview -->
-                <div class="aligned-result-summary-box">
-                  <div class="aligned-thumb-preview">
-                    <img id="thumb-aligned-summary" src="" alt="Aligned Summary" />
-                  </div>
-                  <div class="sensor-legend">
-                    <span class="legend-item"><span class="legend-dot dot-ohrc"></span> OHRC (Source)</span>
-                    <span class="legend-item"><span class="legend-dot dot-tmc2"></span> TMC-2 (Ref)</span>
-                    <span class="legend-item"><span class="legend-dot dot-iirs"></span> IIRS (Spectral)</span>
-                    <span class="legend-item"><span class="legend-dot dot-lroc"></span> LROC (Base)</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- CARD 5: Interactive Visualizations Stage -->
-            <section class="dash-card card-visualizer" id="card-visualizer-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">5</span>
-                  <h3>Visualization</h3>
-                </div>
-                <!-- Visualization Mode Tabs -->
-                <div class="viz-sub-tabs" role="tablist">
-                  <button class="viz-tab-btn active" data-viz="curtain" role="tab" aria-selected="true">Split Curtain</button>
-                  <button class="viz-tab-btn" data-viz="overlay" role="tab" aria-selected="false">Overlay View</button>
-                  <button class="viz-tab-btn" data-viz="inliers" role="tab" aria-selected="false">Inlier Matches</button>
-                  <button class="viz-tab-btn" data-viz="checkerboard" role="tab" aria-selected="false">Checkerboard</button>
-                  <button class="viz-tab-btn" data-viz="alignment" role="tab" aria-selected="false">Alignment</button>
-                  <button class="viz-tab-btn" data-viz="difference" role="tab" aria-selected="false">Difference</button>
-                  <button class="viz-tab-btn" data-viz="summary" role="tab" aria-selected="false">Full Summary</button>
-                </div>
-              </div>
-              <div class="card-body viz-stage-body">
-                
-                <!-- Visualization Stage Controls (Zoom, Pan, Opacity) -->
-                <div class="stage-control-bar">
-                  <div class="stage-controls-left" id="viz-opacity-control-group" style="display: none;">
-                    <label for="viz-opacity-slider">Overlay Blend Opacity:</label>
-                    <input type="range" id="viz-opacity-slider" min="0" max="100" value="50" class="range-slider" />
-                    <span id="viz-opacity-val" class="font-mono">50%</span>
-                  </div>
-                  <div class="stage-controls-left" id="viz-curtain-instructions">
-                    <span class="curtain-hint">Drag the center slider left / right to inspect sub-pixel alignment</span>
-                  </div>
-                  <div class="stage-controls-right">
-                    <button class="stage-btn" id="btn-zoom-in" title="Zoom In">+</button>
-                    <button class="stage-btn" id="btn-zoom-out" title="Zoom Out">&minus;</button>
-                    <button class="stage-btn" id="btn-zoom-reset" title="Reset View">Reset</button>
-                    <button class="stage-btn" id="btn-fullscreen-viz" title="Toggle Full View">&#x26F6;</button>
-                  </div>
-                </div>
-
-                <!-- Interactive Viewer Stage Canvas Container -->
-                <div class="interactive-stage-viewport" id="stage-viewport">
-                  
-                  <!-- MODE 1: Split Curtain Slider -->
-                  <div class="viz-mode-panel active" id="viz-panel-curtain">
-                    <div class="curtain-container" id="curtain-container">
-                      <img id="curtain-img-bg" class="curtain-img" src="" alt="Registered Warped Layer" />
-                      <div class="curtain-overlay" id="curtain-overlay">
-                        <img id="curtain-img-fg" class="curtain-img" src="" alt="Reference Base Layer" />
-                      </div>
-                      <div class="curtain-divider" id="curtain-divider">
-                        <div class="curtain-handle" aria-label="Curtain Divider">
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- MODE 2: Overlay Blend View -->
-                  <div class="viz-mode-panel" id="viz-panel-overlay">
-                    <div class="overlay-blend-container" id="overlay-blend-container">
-                      <img id="overlay-img-bg" class="blend-layer bg-layer" src="" alt="Reference Base" />
-                      <img id="overlay-img-fg" class="blend-layer fg-layer" src="" alt="Registered Warped" style="opacity: 0.5;" />
-                    </div>
-                  </div>
-
-                  <!-- MODE 3: Feature Inlier Matches -->
-                  <div class="viz-mode-panel" id="viz-panel-inliers">
-                    <div class="single-image-box">
-                      <img id="img-stage-inliers" src="" alt="Inlier Matches Visualization" class="stage-image-fit" />
-                    </div>
-                  </div>
-
-                  <!-- MODE 4: Checkerboard & Blend -->
-                  <div class="viz-mode-panel" id="viz-panel-checkerboard">
-                    <div class="single-image-box">
-                      <img id="img-stage-checkerboard" src="" alt="Checkerboard and Alignment Visualization" class="stage-image-fit" />
-                    </div>
-                  </div>
-
-                  <!-- MODE 5: Registration Alignment -->
-                  <div class="viz-mode-panel" id="viz-panel-alignment">
-                    <div class="single-image-box">
-                      <img id="img-stage-alignment" src="" alt="Registration Alignment Box Visualization" class="stage-image-fit" />
-                    </div>
-                  </div>
-
-                  <!-- MODE 6: Difference Heatmap -->
-                  <div class="viz-mode-panel" id="viz-panel-difference">
-                    <div class="single-image-box">
-                      <img id="img-stage-difference" src="" alt="Residual Difference Heatmap" class="stage-image-fit" />
-                    </div>
-                  </div>
-
-                  <!-- MODE 7: Full Scientific Summary -->
-                  <div class="viz-mode-panel" id="viz-panel-summary">
-                    <div class="single-image-box">
-                      <img id="img-stage-summary" src="" alt="Full Registration Dashboard Summary" class="stage-image-fit" />
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            </section>
-
+          <!-- 12 Stage Grid / Stepper -->
+          <div class="pipeline-stepper-12" id="pipeline-stepper-12">
+            <div class="p-step" id="ps-1" data-stage="1"><span class="ps-dot">1</span><div class="ps-content"><span class="ps-txt">Validation &amp; QC</span><span class="ps-sub">Radiometry &amp; formats</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-2" data-stage="2"><span class="ps-dot">2</span><div class="ps-content"><span class="ps-txt">Geospatial Overlap</span><span class="ps-sub">Footprint intersection</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-3" data-stage="3"><span class="ps-dot">3</span><div class="ps-content"><span class="ps-txt">Terrain Suitability</span><span class="ps-sub">Crater richness</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-4" data-stage="4"><span class="ps-dot">4</span><div class="ps-content"><span class="ps-txt">GSD Equalization</span><span class="ps-sub">CLAHE &amp; pyramids</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-5" data-stage="5"><span class="ps-dot">5</span><div class="ps-content"><span class="ps-txt">Feature Detection</span><span class="ps-sub">Keypoint extraction</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-6" data-stage="6"><span class="ps-dot">6</span><div class="ps-content"><span class="ps-txt">Descriptor Matching</span><span class="ps-sub">Nearest neighbors</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-7" data-stage="7"><span class="ps-dot">7</span><div class="ps-content"><span class="ps-txt">Confidence Filter</span><span class="ps-sub">Outlier rejection</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-8" data-stage="8"><span class="ps-dot">8</span><div class="ps-content"><span class="ps-txt">Spatial Grid Selection</span><span class="ps-sub">8x8 uniform spread</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-9" data-stage="9"><span class="ps-dot">9</span><div class="ps-content"><span class="ps-txt">Robust Geometry</span><span class="ps-sub">MAGSAC / RANSAC</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-10" data-stage="10"><span class="ps-dot">10</span><div class="ps-content"><span class="ps-txt">Sub-Pixel Refinement</span><span class="ps-sub">Gradient optimizer</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-11" data-stage="11"><span class="ps-dot">11</span><div class="ps-content"><span class="ps-txt">Image Warping</span><span class="ps-sub">Bicubic interpolation</span></div><span class="ps-status-pill">QUEUED</span></div>
+            <div class="p-step" id="ps-12" data-stage="12"><span class="ps-dot">12</span><div class="ps-content"><span class="ps-txt">Evaluation &amp; Report</span><span class="ps-sub">SSIM, PSNR, RMSE</span></div><span class="ps-status-pill">QUEUED</span></div>
           </div>
 
-          <!-- BOTTOM ROW: Card 6 (Experiment History) + Card 7 (Comparative Analysis) + Card 8 (Scientific Evidence) -->
-          <div class="grid-row-bottom">
-            
-            <!-- CARD 6: Experiment History Table -->
-            <section class="dash-card card-history" id="card-history-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">6</span>
-                  <h3>Experiment History</h3>
-                </div>
-                <!-- Filters -->
-                <div class="history-filter-bar">
-                  <input type="text" id="history-search-input" placeholder="Search Run ID / Scenario..." class="history-search" />
-                  <select id="history-scenario-filter" class="history-select">
-                    <option value="ALL">All Scenarios</option>
-                  </select>
-                  <select id="history-status-filter" class="history-select">
-                    <option value="ALL">All Status</option>
-                    <option value="SUCCESS">Success Only</option>
-                    <option value="FAILED">Failed Only</option>
-                  </select>
-                </div>
-              </div>
-              <div class="card-body">
-                <div class="history-table-container">
-                  <table class="history-table" id="history-table">
-                    <thead>
-                      <tr>
-                        <th class="col-checkbox"><input type="checkbox" id="check-all-runs" title="Select All for Comparison" /></th>
-                        <th>Experiment ID</th>
-                        <th>Date &amp; Time</th>
-                        <th>Scenario</th>
-                        <th>Detector / Model</th>
-                        <th>Quality</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody id="history-tbody">
-                      <tr>
-                        <td colspan="8" class="table-loading-cell">Loading experiment runs from backend...</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <!-- Selection Compare Bar -->
-                <div class="compare-selection-bar" id="compare-bar" style="display: none;">
-                  <span id="compare-count-text">0 runs selected</span>
-                  <button class="btn btn-secondary btn-sm" id="btn-trigger-comparison">Compare Selected Runs</button>
-                </div>
-              </div>
-            </section>
-
-            <!-- CARD 7: Comparative Analysis Charts -->
-            <section class="dash-card card-comparison" id="card-comparison-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">7</span>
-                  <h3>Comparative Analysis</h3>
-                </div>
-                <span class="card-tag">Multi-Run Analytics</span>
-              </div>
-              <div class="card-body">
-                <div class="chart-container" id="svg-chart-container">
-                  <div class="chart-header">
-                    <span class="chart-title">Reprojection RMSE vs. Experiment Iterations</span>
-                    <div class="chart-legend">
-                      <span class="legend-chip"><span class="chip-color c-sift"></span> SIFT</span>
-                      <span class="legend-chip"><span class="chip-color c-orb"></span> ORB</span>
-                      <span class="legend-chip"><span class="chip-color c-magsac"></span> USAC_MAGSAC</span>
-                    </div>
-                  </div>
-                  <!-- Native SVG Dynamic Chart -->
-                  <div class="svg-chart-wrapper" id="comparison-chart-wrapper">
-                    <svg class="native-svg-chart" id="comparison-svg" viewBox="0 0 480 200" preserveAspectRatio="none">
-                      <!-- Gridlines and curves drawn dynamically by app.js -->
-                    </svg>
-                  </div>
-                  <div class="chart-summary-stat">
-                    <span>Mean Reprojection Error: <strong id="chart-mean-rmse" class="font-mono text-cyan">-- px</strong></span>
-                    <span>Sub-pixel target: <strong class="text-emerald font-mono">&lt; 1.0 px</strong></span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- CARD 8: Scientific Evidence & Ground Truth Verification -->
-            <section class="dash-card card-evidence" id="card-evidence-box">
-              <div class="card-header">
-                <div class="card-title-group">
-                  <span class="card-num">8</span>
-                  <h3>Scientific Evidence</h3>
-                </div>
-                <span class="badge-verified" id="badge-gt-verified">&#x2713; Verified</span>
-              </div>
-              <div class="card-body">
-                <div class="evidence-grid">
-                  <div class="evidence-row">
-                    <span class="ev-k">Ground Truth Source</span>
-                    <span class="ev-v" id="ev-gt-source">Synthetic Planetary Surface Generator</span>
-                  </div>
-                  <div class="evidence-row">
-                    <span class="ev-k">Dataset Scenario</span>
-                    <span class="ev-v font-mono text-cyan" id="ev-dataset-scenario">COMBINED</span>
-                  </div>
-                  <div class="evidence-row">
-                    <span class="ev-k">Evaluation Metric Suite</span>
-                    <span class="ev-v">RMSE / NCC / SSIM / Inlier Ratio</span>
-                  </div>
-                  <div class="evidence-row">
-                    <span class="ev-k">Corner Reprojection RMSE</span>
-                    <span class="ev-v font-mono" id="ev-corner-rmse">-- px</span>
-                  </div>
-                  <div class="evidence-row">
-                    <span class="ev-k">Matrix Frobenius Norm Diff</span>
-                    <span class="ev-v font-mono" id="ev-frobenius-diff">--</span>
-                  </div>
-                  <div class="evidence-row">
-                    <span class="ev-k">Validation Audit Status</span>
-                    <span class="ev-v text-emerald" id="ev-audit-status">Pass (Sub-pixel Achieved)</span>
-                  </div>
-                </div>
-
-                <div class="evidence-action-box">
-                  <button class="btn btn-secondary btn-block" id="btn-evidence-download">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Download Scientific Audit Evidence</span>
-                  </button>
-                </div>
-              </div>
-            </section>
-
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ==================================================== -->
-      <!-- VIEW: UPLOAD & REGISTER (Standalone Config View)     -->
-      <!-- ==================================================== -->
-      <section class="view-panel" id="view-upload">
-        <div class="section-page-header">
-          <h2>Upload &amp; Register Lunar Image Datasets</h2>
-          <p>Launch controlled orbital registration runs or inspect multi-sensor Chandrayaan-2 and LROC pairs.</p>
-        </div>
-        <div class="page-card config-page-card">
-          <form id="standalone-trigger-form">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="page-scenario-select">Lunar Mission Scenario</label>
-                <select id="page-scenario-select" class="form-control">
-                  <option value="combined">Combined Mission Challenge (Rotation + Scale + Illumination + Noise)</option>
-                  <option value="illumination">Illumination Variations (Solar Elevation &amp; Shadows)</option>
-                  <option value="scale">Multi-Scale Discrepancy (OHRC vs TMC-2 Resolution)</option>
-                  <option value="viewpoint">Off-Nadir Viewpoint / Perspective Tilt</option>
-                  <option value="rotation_translation">Orbital Drift (Rotation &amp; Shift)</option>
-                  <option value="noise">Sensor Noise &amp; Thermal Radiometric Degradation</option>
-                </select>
-                <span class="form-hint" id="page-scenario-desc">Simulates multiple orbital discrepancies simultaneously.</span>
-              </div>
-
-              <div class="form-row-2">
-                <div class="form-group">
-                  <label for="page-seed-input">Random Seed</label>
-                  <input type="number" id="page-seed-input" class="form-control" value="42" />
-                </div>
-                <div class="form-group">
-                  <label for="page-size-select">Image Resolution (px)</label>
-                  <select id="page-size-select" class="form-control">
-                    <option value="512">512 &times; 512</option>
-                    <option value="768">768 &times; 768</option>
-                    <option value="1024">1024 &times; 1024</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row-2">
-                <div class="form-group">
-                  <label for="page-detector-select">Feature Detector</label>
-                  <select id="page-detector-select" class="form-control">
-                    <option value="SIFT">SIFT (Scale-Invariant Feature Transform)</option>
-                    <option value="ORB">ORB (Oriented FAST and Rotated BRIEF)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="page-model-select">Geometric Model</label>
-                  <select id="page-model-select" class="form-control">
-                    <option value="HOMOGRAPHY">HOMOGRAPHY (8-DOF Planar Projective)</option>
-                    <option value="AFFINE">AFFINE (6-DOF Shear + Scale + Rotation)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group checkbox-group">
-                <label class="custom-checkbox">
-                  <input type="checkbox" id="page-subpixel-check" checked />
-                  <span class="checkmark"></span>
-                  <span class="checkbox-text">Enable Sub-pixel Refinement (Parabolic Peak NCC &bull; 15&times;15 patch)</span>
+          <!-- Telemetry Logs Terminal Body -->
+          <div class="terminal-log-wrapper">
+            <div class="terminal-header">
+              <span class="terminal-title">Telemetry &amp; Worker Log Stream</span>
+              <div class="terminal-actions">
+                <label class="terminal-autoscroll">
+                  <input type="checkbox" id="log-autoscroll" checked />
+                  <span>Autoscroll</span>
                 </label>
+                <button type="button" class="terminal-copy-btn" id="btn-copy-log" title="Copy Log">Copy</button>
               </div>
             </div>
-
-            <div class="form-actions-bar">
-              <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-standalone-run">
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                <span>Launch Registration Experiment</span>
-              </button>
+            <div class="terminal-body" id="processing-log-body">
+              <div class="log-line text-muted">Awaiting registration trigger...</div>
             </div>
-          </form>
-        </div>
-      </section>
-
-      <!-- ==================================================== -->
-      <!-- VIEW: EXPERIMENTS (Full Runs Explorer)               -->
-      <!-- ==================================================== -->
-      <section class="view-panel" id="view-experiments">
-        <div class="section-page-header">
-          <h2>Experiment History &amp; Benchmarks</h2>
-          <p>Inspect all registered experiments, filter by criteria, and perform multi-run comparisons.</p>
-        </div>
-        <div class="page-card">
-          <div id="experiments-full-table-target">
-            <!-- Populated dynamically -->
           </div>
         </div>
       </section>
 
       <!-- ==================================================== -->
-      <!-- VIEW: RESULTS (Full Scientific Report & Matrix)      -->
+      <!-- VIEW 3: RESULTS, METRICS & DOWNLOAD CENTER           -->
       <!-- ==================================================== -->
       <section class="view-panel" id="view-results">
         <div class="section-page-header">
-          <h2>Detailed Registration Results &amp; Transformation Matrix</h2>
-          <p>Inspection of estimated 3&times;3 homography, sub-pixel convergence distributions, and raw JSON payload.</p>
+          <div class="page-title-row">
+            <h2>Detailed Registration Results &amp; Quantitative Evaluation</h2>
+            <div class="run-selector-wrap">
+              <label for="results-run-select">Active Run:</label>
+              <select id="results-run-select" class="form-control font-mono"></select>
+            </div>
+          </div>
+          <p>Inspection of estimated 3&times;3 transformation matrix, quantitative error distributions, and complete downloadable artifacts.</p>
         </div>
 
         <div class="results-layout-grid">
+          <!-- Card 1: 3x3 Transformation Matrix -->
           <div class="page-card">
             <h3>Estimated 3&times;3 Transformation Matrix</h3>
             <div id="full-matrix-display" class="matrix-display-box">
@@ -968,52 +750,322 @@
             </div>
           </div>
 
+          <!-- Card 2: Quantitative Accuracy Metrics -->
           <div class="page-card">
-            <h3>Ground Truth Residual Parameters</h3>
-            <div id="full-params-display">
-              <!-- Rendered table -->
+            <h3>Quantitative Accuracy &amp; Image Quality Metrics</h3>
+            <div class="metrics-summary-table-wrap">
+              <table class="metrics-summary-table">
+                <tbody>
+                  <tr><td>Reprojection RMSE:</td><td class="font-mono text-cyan" id="res-rmse-px">-- px</td></tr>
+                  <tr><td>Inlier Ratio:</td><td class="font-mono text-violet" id="res-inlier-ratio">--%</td></tr>
+                  <tr><td>Structural Similarity (SSIM):</td><td class="font-mono text-emerald" id="res-ssim-val">--</td></tr>
+                  <tr><td>Peak Signal-to-Noise (PSNR):</td><td class="font-mono text-amber" id="res-psnr-val">-- dB</td></tr>
+                  <tr><td>Normalized Mutual Info (NMI):</td><td class="font-mono" id="res-nmi-val">--</td></tr>
+                  <tr><td>Spatial Grid Coverage:</td><td class="font-mono text-cyan" id="res-spatial-cov">--%</td></tr>
+                  <tr><td>Sub-Pixel Convergence:</td><td class="font-mono text-emerald" id="res-subpix-conv">--%</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
+        <!-- DOWNLOAD CENTER CARD -->
+        <div class="page-card download-center-card">
+          <div class="card-section-header">
+            <h3>Scientific Artifacts Download Center</h3>
+            <span class="card-tag text-emerald">&#x2713; All Download Endpoints Verified</span>
+          </div>
+          <p class="download-desc">Every generated raster, difference map, diagnostic figure, and peer-reviewed report is available for direct download.</p>
+          
+          <div class="download-buttons-grid">
+            <a id="dl-registered-tif" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F5BC;</span>
+              <div class="dl-text"><span class="dl-name">Registered Image (GeoTIFF)</span><span class="dl-ext">registered_image.tif</span></div>
+            </a>
+            <a id="dl-registered-png" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F5BC;</span>
+              <div class="dl-text"><span class="dl-name">Registered Image (PNG)</span><span class="dl-ext">registered_image.png</span></div>
+            </a>
+            <a id="dl-reference-tif" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F5BC;</span>
+              <div class="dl-text"><span class="dl-name">Reference Base (TIFF)</span><span class="dl-ext">reference_image.tif</span></div>
+            </a>
+            <a id="dl-valid-mask" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x25A3;</span>
+              <div class="dl-text"><span class="dl-name">Valid Area Mask</span><span class="dl-ext">valid_mask.png</span></div>
+            </a>
+            <a id="dl-diff-map" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F525;</span>
+              <div class="dl-text"><span class="dl-name">Difference Heatmap</span><span class="dl-ext">difference_map.png</span></div>
+            </a>
+            <a id="dl-checkerboard" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F3C1;</span>
+              <div class="dl-text"><span class="dl-name">Checkerboard Blend</span><span class="dl-ext">checkerboard.png</span></div>
+            </a>
+            <a id="dl-matches" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x2728;</span>
+              <div class="dl-text"><span class="dl-name">Keypoint Matches</span><span class="dl-ext">matches.png</span></div>
+            </a>
+            <a id="dl-report-md" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F4C4;</span>
+              <div class="dl-text"><span class="dl-name">Scientific Report (MD)</span><span class="dl-ext">scientific_report.md</span></div>
+            </a>
+            <a id="dl-report-json" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F4CB;</span>
+              <div class="dl-text"><span class="dl-name">Scientific Report (JSON)</span><span class="dl-ext">scientific_report.json</span></div>
+            </a>
+            <a id="dl-metrics-json" class="btn btn-secondary btn-dl" href="#" download>
+              <span class="dl-icon">&#x1F4CA;</span>
+              <div class="dl-text"><span class="dl-name">Evaluation Metrics</span><span class="dl-ext">metrics.json</span></div>
+            </a>
+            <a id="dl-zip-package" class="btn btn-primary btn-dl btn-dl-featured" href="#" download>
+              <span class="dl-icon">&#x1F4E6;</span>
+              <div class="dl-text"><span class="dl-name">COMPLETE RESULT PACKAGE (ZIP)</span><span class="dl-ext">SIH26166_registration_results.zip</span></div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Raw JSON Payload Viewer -->
         <div class="page-card" style="margin-top: 20px;">
-          <h3>Complete Raw Metrics JSON Payload</h3>
+          <h3>Complete Metrics JSON Payload</h3>
           <pre class="raw-json-code" id="full-json-viewer">Loading JSON...</pre>
         </div>
       </section>
 
       <!-- ==================================================== -->
-      <!-- VIEW: VISUALIZATIONS (Dedicated Visual Gallery)     -->
+      <!-- VIEW 4: SCIENTIFIC REPORTS                           -->
+      <!-- ==================================================== -->
+      <section class="view-panel" id="view-reports">
+        <div class="section-page-header">
+          <div class="page-title-row">
+            <h2>14-Section Scientific Registration Report</h2>
+            <div class="report-actions-top">
+              <a id="btn-dl-report-md-top" class="btn btn-primary btn-sm" href="#" download>Download Markdown (.md)</a>
+              <a id="btn-dl-report-json-top" class="btn btn-secondary btn-sm" href="#" download>Download JSON (.json)</a>
+            </div>
+          </div>
+          <p>Standardized, peer-review grade validation report detailing sensor provenance, spatial metrics, and reproducibility.</p>
+        </div>
+
+        <div class="page-card report-rendered-card">
+          <div class="report-content-body" id="report-rendered-body">
+            <p class="text-muted">Loading scientific report...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VIEW 5: VISUALIZATIONS GALLERY                       -->
       <!-- ==================================================== -->
       <section class="view-panel" id="view-visualizations">
         <div class="section-page-header">
           <h2>Scientific Image Visualizations Gallery</h2>
-          <p>Full-resolution multi-modal alignment artifacts, inlier vectors, and checkerboard blend diagnostics.</p>
+          <p>Interactive split curtain slider, false color overlay blend, inlier vector plots, checkerboard continuity, and difference heatmaps.</p>
         </div>
-        <div class="gallery-grid" id="full-gallery-grid">
-          <!-- Gallery cards generated dynamically -->
+
+        <div class="page-card">
+          <div class="viz-sub-tabs" role="tablist">
+            <button class="viz-tab-btn active" data-viz="curtain" role="tab" aria-selected="true">Split Curtain Slider</button>
+            <button class="viz-tab-btn" data-viz="overlay" role="tab" aria-selected="false">Overlay Blend</button>
+            <button class="viz-tab-btn" data-viz="inliers" role="tab" aria-selected="false">Inlier Matches</button>
+            <button class="viz-tab-btn" data-viz="checkerboard" role="tab" aria-selected="false">Checkerboard</button>
+            <button class="viz-tab-btn" data-viz="difference" role="tab" aria-selected="false">Difference Heatmap</button>
+            <button class="viz-tab-btn" data-viz="alignment" role="tab" aria-selected="false">Alignment</button>
+          </div>
+
+          <div class="interactive-stage-viewport" id="stage-viewport">
+            <!-- Split Curtain Slider -->
+            <div class="viz-mode-panel active" id="viz-panel-curtain">
+              <div class="curtain-container" id="curtain-container">
+                <img id="curtain-img-bg" class="curtain-img" src="" alt="Registered Layer" />
+                <div class="curtain-overlay" id="curtain-overlay">
+                  <img id="curtain-img-fg" class="curtain-img" src="" alt="Reference Layer" />
+                </div>
+                <div class="curtain-divider" id="curtain-divider">
+                  <div class="curtain-handle" aria-label="Curtain Divider">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Overlay Blend View -->
+            <div class="viz-mode-panel" id="viz-panel-overlay">
+              <div class="overlay-blend-container" id="overlay-blend-container">
+                <img id="overlay-img-bg" class="blend-layer bg-layer" src="" alt="Reference Base" />
+                <img id="overlay-img-fg" class="blend-layer fg-layer" src="" alt="Registered Warped" style="opacity: 0.5;" />
+              </div>
+            </div>
+
+            <!-- Feature Inlier Matches -->
+            <div class="viz-mode-panel" id="viz-panel-inliers">
+              <div class="single-image-box">
+                <img id="img-stage-inliers" src="" alt="Inlier Matches Visualization" class="stage-image-fit" />
+              </div>
+            </div>
+
+            <!-- Checkerboard & Blend -->
+            <div class="viz-mode-panel" id="viz-panel-checkerboard">
+              <div class="single-image-box">
+                <img id="img-stage-checkerboard" src="" alt="Checkerboard Visualization" class="stage-image-fit" />
+              </div>
+            </div>
+
+            <!-- Registration Alignment -->
+            <div class="viz-mode-panel" id="viz-panel-alignment">
+              <div class="single-image-box">
+                <img id="img-stage-alignment" src="" alt="Registration Alignment Visualization" class="stage-image-fit" />
+              </div>
+            </div>
+
+            <!-- Difference Heatmap -->
+            <div class="viz-mode-panel" id="viz-panel-difference">
+              <div class="single-image-box">
+                <img id="img-stage-difference" src="" alt="Residual Difference Heatmap" class="stage-image-fit" />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       <!-- ==================================================== -->
-      <!-- VIEW: SCIENTIFIC EVIDENCE                            -->
+      <!-- VIEW 6: CONTROL POINTS & GROUND TRUTH                -->
       <!-- ==================================================== -->
-      <section class="view-panel" id="view-evidence">
+      <section class="view-panel" id="view-control-points">
         <div class="section-page-header">
-          <h2>Scientific Validation &amp; Ground Truth Evidence</h2>
-          <p>Rigorous mathematical validation against known orbital camera matrices and synthetic ground truth.</p>
+          <h2>Ground Truth &amp; Control Points Management</h2>
+          <p>Inspection and manual verification of tie points: Algorithmic Inliers, Ground Truth Points, and Manual Check Points.</p>
         </div>
-        <div class="page-card" id="evidence-detail-card">
-          <!-- Ground truth evidence details -->
+
+        <div class="page-card">
+          <div class="cp-header-bar">
+            <h3>Registered Control Points for Active Experiment</h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-add-cp">+ Add Verified Control Point</button>
+          </div>
+
+          <!-- Add Control Point Form -->
+          <div id="add-cp-form-container" style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <form id="add-cp-form">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Source Pixel (X, Y):</label>
+                  <div style="display: flex; gap: 10px;">
+                    <input type="number" id="cp-src-x" class="form-control font-mono" placeholder="X px" required />
+                    <input type="number" id="cp-src-y" class="form-control font-mono" placeholder="Y px" required />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Reference Pixel (X, Y):</label>
+                  <div style="display: flex; gap: 10px;">
+                    <input type="number" id="cp-ref-x" class="form-control font-mono" placeholder="X px" required />
+                    <input type="number" id="cp-ref-y" class="form-control font-mono" placeholder="Y px" required />
+                  </div>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Point Type:</label>
+                  <select id="cp-point-type" class="form-control">
+                    <option value="MANUAL_CHECK">MANUAL_CHECK (Researcher Verified)</option>
+                    <option value="GROUND_TRUTH">GROUND_TRUTH (Canonical Tie Point)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Annotator / Notes:</label>
+                  <input type="text" id="cp-notes" class="form-control" placeholder="Crater rim landmark verification" />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Save Verified Point</button>
+            </form>
+          </div>
+
+          <div class="history-table-container">
+            <table class="history-table" id="cp-table">
+              <thead>
+                <tr>
+                  <th>Point ID</th>
+                  <th>Type</th>
+                  <th>Source (X, Y)</th>
+                  <th>Reference (X, Y)</th>
+                  <th>Confidence</th>
+                  <th>Status</th>
+                  <th>Annotator</th>
+                </tr>
+              </thead>
+              <tbody id="cp-tbody">
+                <tr>
+                  <td colspan="7" class="table-loading-cell">No control points recorded for active run.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       <!-- ==================================================== -->
-      <!-- VIEW: SYSTEM STATUS                                  -->
+      <!-- VIEW 7: RUN HISTORY                                  -->
+      <!-- ==================================================== -->
+      <section class="view-panel" id="view-experiments">
+        <div class="section-page-header">
+          <h2>Experiment Run History &amp; Analytics</h2>
+          <p>Inspect all registered experiments, filter by criteria, and review quality scores.</p>
+        </div>
+        <div class="page-card">
+          <div class="history-filter-bar">
+            <input type="text" id="history-search-input" placeholder="Search Run ID / Region / Sensor..." class="history-search" />
+            <select id="history-status-filter" class="history-select">
+              <option value="ALL">All Status</option>
+              <option value="SUCCESS">Success Only</option>
+              <option value="FAILED">Failed Only</option>
+            </select>
+          </div>
+          <div class="history-table-container">
+            <table class="history-table" id="history-table">
+              <thead>
+                <tr>
+                  <th>Experiment ID</th>
+                  <th>Date &amp; Time</th>
+                  <th>Region</th>
+                  <th>Detector / Model</th>
+                  <th>Quality Score</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <tr>
+                  <td colspan="7" class="table-loading-cell">Loading experiment runs from backend...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VIEW 8: BENCHMARKS                                   -->
+      <!-- ==================================================== -->
+      <section class="view-panel" id="view-benchmarks">
+        <div class="section-page-header">
+          <h2>Controlled Benchmark Suite &amp; External Method Comparisons</h2>
+          <p>Execute synthetic stress suites and compare with published literature references (SuperPoint, SIFT, ORB).</p>
+        </div>
+        <div class="page-card">
+          <div class="benchmark-action-bar">
+            <button type="button" class="btn btn-primary" id="btn-run-bench-suite">Execute 6-Case Benchmark Suite</button>
+          </div>
+          <div class="benchmark-results-view" id="benchmark-results-view" style="margin-top: 15px;">
+            <p class="text-muted">Click above to execute the benchmark suite.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- VIEW 9: SYSTEM STATE                                 -->
       <!-- ==================================================== -->
       <section class="view-panel" id="view-system">
         <div class="section-page-header">
-          <h2>System Health &amp; Diagnostics</h2>
+          <h2>System Health &amp; Runtime Telemetry</h2>
           <p>Live health monitoring for the scientific pipeline, storage subsystems, and Python environment.</p>
         </div>
         <div class="system-diagnostics-grid" id="system-diagnostics-grid">
@@ -1021,132 +1073,7 @@
         </div>
       </section>
 
-      <!-- ==================================================== -->
-      <!-- VIEW: SETTINGS                                       -->
-      <!-- ==================================================== -->
-      <section class="view-panel" id="view-settings">
-        <div class="section-page-header">
-          <h2>Dashboard Settings &amp; Preferences</h2>
-          <p>Configure polling frequency, theme accents, and display options.</p>
-        </div>
-        <div class="page-card">
-          <div class="settings-form">
-            <div class="form-group">
-              <label for="setting-poll-interval">Live Polling Interval (seconds)</label>
-              <select id="setting-poll-interval" class="form-control" style="max-width: 300px;">
-                <option value="2000">2 seconds (High Frequency)</option>
-                <option value="5000" selected>5 seconds (Recommended)</option>
-                <option value="10000">10 seconds</option>
-                <option value="30000">30 seconds</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Interface Theme Mode</label>
-              <div class="theme-options">
-                <span class="theme-pill active">Deep Space Navy (Default)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
     </main>
-  </div>
-
-  <!-- Modal: Launch New Registration Experiment -->
-  <div id="run-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-header-left">
-          <span class="modal-icon">&#x1F680;</span>
-          <h2 id="modal-heading">Launch New Registration Experiment</h2>
-        </div>
-        <button id="btn-close-modal" class="btn-close" aria-label="Close Modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="trigger-form">
-          <div class="form-group">
-            <label for="modal-scenario">Lunar Mission Scenario</label>
-            <select id="modal-scenario" class="form-control">
-              <option value="combined">Combined Mission Challenge (Rotation + Scale + Illumination + Noise)</option>
-              <option value="illumination">Illumination Variations (Solar Elevation &amp; Shadows)</option>
-              <option value="scale">Multi-Scale Discrepancy (OHRC vs TMC-2)</option>
-              <option value="viewpoint">Off-Nadir Viewpoint / Perspective Tilt</option>
-              <option value="rotation_translation">Orbital Drift (Rotation &amp; Shift)</option>
-              <option value="noise">Sensor Noise &amp; Thermal Gain</option>
-            </select>
-            <span class="form-hint" id="modal-scenario-hint">Multi-distortion lunar test scenario.</span>
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label for="modal-seed">Random Seed</label>
-              <input type="number" id="modal-seed" class="form-control" value="42" />
-            </div>
-            <div class="form-group">
-              <label for="modal-size">Image Size (px)</label>
-              <select id="modal-size" class="form-control">
-                <option value="512">512 &times; 512</option>
-                <option value="768">768 &times; 768</option>
-                <option value="1024">1024 &times; 1024</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label for="modal-detector">Feature Detector</label>
-              <select id="modal-detector" class="form-control">
-                <option value="SIFT">SIFT (2000 keypoints)</option>
-                <option value="ORB">ORB (Oriented FAST)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="modal-model">Geometry Model</label>
-              <select id="modal-model" class="form-control">
-                <option value="HOMOGRAPHY">HOMOGRAPHY (8-DOF)</option>
-                <option value="AFFINE">AFFINE (6-DOF)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group checkbox-group">
-            <label class="custom-checkbox">
-              <input type="checkbox" id="modal-subpixel" checked />
-              <span class="checkmark"></span>
-              <span class="checkbox-text">Enable Sub-pixel Refinement (Local correlation NCC)</span>
-            </label>
-          </div>
-
-          <!-- Asynchronous Live Job Progress Box -->
-          <div id="modal-progress-area" class="modal-progress-area" style="display: none;">
-            <div class="modal-spinner"></div>
-            <div class="modal-progress-content">
-              <strong id="modal-progress-status">Executing Registration Pipeline...</strong>
-              <span id="modal-progress-sub">12-Stage Scientific Orchestrator running asynchronously</span>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Cancel</button>
-            <button type="submit" id="btn-submit-run" class="btn btn-primary">
-              <span>Start Pipeline</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Image Lightbox / Fullscreen Inspector Modal -->
-  <div id="lightbox-modal" class="lightbox-backdrop" style="display: none;">
-    <div class="lightbox-content">
-      <button id="btn-close-lightbox" class="lightbox-close">&times;</button>
-      <h3 id="lightbox-title" class="lightbox-title">Image Inspection</h3>
-      <div class="lightbox-img-wrap">
-        <img id="lightbox-img" src="" alt="Full view" />
-      </div>
-    </div>
   </div>
 
   <script src="app.js"></script>
