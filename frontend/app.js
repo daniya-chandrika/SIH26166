@@ -630,7 +630,7 @@
   }
 
   // =========================================================================
-  // MODE B: Remote Lunar Data Discovery & Caching
+  // MODE B: Remote Lunar Data Discovery & Caching (Step 1 & Step 2)
   // =========================================================================
   function initModeBRemote() {
     const radioMethods = document.querySelectorAll('input[name="remote-search-type"]');
@@ -644,8 +644,49 @@
         if (groupCoords) groupCoords.style.display = r.value === 'coords' ? 'block' : 'none';
         if (groupRegionName) groupRegionName.style.display = r.value === 'region_name' ? 'block' : 'none';
         if (groupRegionId) groupRegionId.style.display = r.value === 'region_id' ? 'block' : 'none';
+        updateModeBPairingCard();
       });
     });
+
+    const regionSelect = document.getElementById('remote-select-region-id');
+    if (regionSelect) {
+      regionSelect.addEventListener('change', (e) => {
+        state.selectedRegionCode = e.target.value;
+        if (PREDEFINED_REGIONS[e.target.value]) {
+          state.latitude = PREDEFINED_REGIONS[e.target.value].lat;
+          state.longitude = PREDEFINED_REGIONS[e.target.value].lon;
+        }
+        updateModeBPairingCard();
+        executeRemoteSearch();
+      });
+    }
+
+    const inputLat = document.getElementById('remote-input-lat');
+    const inputLon = document.getElementById('remote-input-lon');
+    if (inputLat && inputLon) {
+      const updateCoords = () => {
+        state.latitude = parseFloat(inputLat.value) || -89.9;
+        state.longitude = parseFloat(inputLon.value) || 0.0;
+        updateModeBPairingCard();
+      };
+      inputLat.addEventListener('input', updateCoords);
+      inputLon.addEventListener('input', updateCoords);
+    }
+
+    const inputRegionName = document.getElementById('remote-input-region-name');
+    if (inputRegionName) {
+      inputRegionName.addEventListener('input', () => {
+        updateModeBPairingCard();
+      });
+    }
+
+    const sensorSelect = document.getElementById('remote-sensor-select');
+    if (sensorSelect) {
+      sensorSelect.addEventListener('change', (e) => {
+        state.sourceSensor = e.target.value || 'OHRC';
+        updateModeBPairingCard();
+      });
+    }
 
     const btnSearch = document.getElementById('btn-search-remote-archives');
     if (btnSearch) {
@@ -655,6 +696,48 @@
     const btnAutoSelect = document.getElementById('btn-auto-select-pair');
     if (btnAutoSelect) {
       btnAutoSelect.addEventListener('click', autoSelectRemotePair);
+    }
+
+    // Initial update of Mode B Pairing Card
+    updateModeBPairingCard();
+  }
+
+  function updateModeBPairingCard(product) {
+    const regVal = document.getElementById('remote-pair-region-val');
+    const srcTitle = document.getElementById('remote-pair-source-title');
+    const srcRes = document.getElementById('remote-pair-source-res');
+    const srcProd = document.getElementById('remote-pair-source-prod');
+    const statusVal = document.getElementById('remote-pair-status-val');
+
+    const regionCode = document.getElementById('remote-select-region-id')?.value || state.selectedRegionCode || 'R01';
+    const regMeta = PREDEFINED_REGIONS[regionCode];
+    const sensor = document.getElementById('remote-sensor-select')?.value || 'OHRC';
+
+    if (srcTitle) {
+      srcTitle.textContent = `Chandrayaan-2 ${product?.sensor || sensor}`;
+    }
+    if (srcRes) {
+      srcRes.textContent = product?.gsd_m ? `GSD: ${product.gsd_m} m/px` : (sensor === 'OHRC' ? 'GSD: 0.25 m' : 'GSD: 5.0 m');
+    }
+    if (srcProd) {
+      srcProd.textContent = product?.product_id ? `Product: ${product.product_id}` : 'Product: Remote Catalogue';
+    }
+
+    if (regVal) {
+      if (state.remoteSearchType === 'coords') {
+        const lat = parseFloat(document.getElementById('remote-input-lat')?.value || -89.9);
+        const lon = parseFloat(document.getElementById('remote-input-lon')?.value || 0.0);
+        regVal.textContent = `Custom ROI (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`;
+      } else if (state.remoteSearchType === 'region_name') {
+        const name = document.getElementById('remote-input-region-name')?.value || 'Shackleton Crater';
+        regVal.textContent = `Region: ${name}`;
+      } else {
+        regVal.textContent = `${regionCode} (${regMeta ? regMeta.name : 'Target ROI'})`;
+      }
+    }
+
+    if (statusVal) {
+      statusVal.textContent = 'READY FOR PIPELINE';
     }
   }
 
@@ -777,6 +860,7 @@
     if (cardEl) cardEl.classList.add('selected');
 
     state.selectedRemoteProduct = product;
+    updateModeBPairingCard(product);
     showToast(`Acquiring ROI window for ${product.product_id}...`, 'info');
 
     try {
@@ -794,7 +878,7 @@
       const data = await res.json();
       if (res.ok && (data.status === 'READY' || data.product)) {
         state.cachedRemoteProduct = data.product || product;
-        updatePairingCard(state.cachedRemoteProduct);
+        updateModeBPairingCard(state.cachedRemoteProduct);
         showToast(`Product ${product.product_id} cached and ready for registration.`, 'success');
       } else {
         showToast(`Failed to cache remote product: ${data.message || 'Unknown error'}`, 'error');
@@ -821,39 +905,83 @@
   // 12-Stage Registration Execution & State Machine Polling
   // =========================================================================
   function initRegistrationExecution() {
-    const btnStart = document.getElementById('btn-trigger-real-registration');
-    if (btnStart) {
-      btnStart.addEventListener('click', startRegistrationJob);
+    const btnStartA = document.getElementById('btn-trigger-real-registration');
+    if (btnStartA) {
+      btnStartA.addEventListener('click', () => startRegistrationJob('LOCAL'));
+    }
+
+    const btnStartB = document.getElementById('btn-trigger-mode-b-registration');
+    if (btnStartB) {
+      btnStartB.addEventListener('click', () => startRegistrationJob('REMOTE'));
     }
 
     // Check for active job on refresh recovery
     recoverActiveJob();
   }
 
-  async function startRegistrationJob() {
-    const btnStart = document.getElementById('btn-trigger-real-registration');
-    if (btnStart) {
-      btnStart.disabled = true;
-    }
+  async function startRegistrationJob(forcedMode) {
+    const btnStartA = document.getElementById('btn-trigger-real-registration');
+    const btnStartB = document.getElementById('btn-trigger-mode-b-registration');
+    if (btnStartA) btnStartA.disabled = true;
+    if (btnStartB) btnStartB.disabled = true;
 
     // Determine payload based on active data mode
-    const isModeA = state.dataMode === 'mode_a';
-    const payload = {
-      data_mode: isModeA ? 'LOCAL' : 'REMOTE',
-      region: state.selectedRegionCode || 'R01',
-      source_sensor: state.sourceSensor === 'AUTO_DETECT' ? (state.detectedSensor || 'OHRC') : state.sourceSensor,
-      reference_sensor: state.referenceSensor || 'LROC',
-      feature_detector: 'SIFT',
-      geometric_model: 'homography',
-    };
+    const isModeB = forcedMode === 'REMOTE' || (forcedMode !== 'LOCAL' && state.dataMode === 'mode_b');
+    let payload = {};
 
-    if (isModeA && state.ingestedProduct) {
-      payload.source_product = state.ingestedProduct.product_id;
-    } else if (!isModeA && state.cachedRemoteProduct) {
-      payload.source_product = state.cachedRemoteProduct.product_id;
+    if (isModeB) {
+      let regionCode = document.getElementById('remote-select-region-id')?.value || state.selectedRegionCode || 'R01';
+      let lat = parseFloat(document.getElementById('remote-input-lat')?.value || -89.9);
+      let lon = parseFloat(document.getElementById('remote-input-lon')?.value || 0.0);
+
+      if (state.remoteSearchType === 'region_id' && PREDEFINED_REGIONS[regionCode]) {
+        lat = PREDEFINED_REGIONS[regionCode].lat;
+        lon = PREDEFINED_REGIONS[regionCode].lon;
+      } else if (state.remoteSearchType === 'region_name') {
+        const regionName = document.getElementById('remote-input-region-name')?.value || '';
+        const match = Object.values(PREDEFINED_REGIONS).find(r => r.name.toLowerCase().includes(regionName.toLowerCase()));
+        if (match) {
+          regionCode = match.code;
+          lat = match.lat;
+          lon = match.lon;
+        }
+      }
+
+      const srcSensor = document.getElementById('remote-sensor-select')?.value || 'OHRC';
+
+      payload = {
+        data_mode: 'REMOTE',
+        region: regionCode,
+        latitude: lat,
+        longitude: lon,
+        source_sensor: srcSensor,
+        reference_sensor: 'LROC',
+        feature_detector: 'SIFT',
+        geometric_model: 'homography',
+      };
+
+      if (state.cachedRemoteProduct) {
+        payload.source_product = state.cachedRemoteProduct.product_id;
+      } else if (state.selectedRemoteProduct) {
+        payload.source_product = state.selectedRemoteProduct.product_id;
+      }
+    } else {
+      const regionCode = document.getElementById('ingestion-region-select')?.value || state.selectedRegionCode || 'R01';
+      payload = {
+        data_mode: 'LOCAL',
+        region: regionCode,
+        source_sensor: state.sourceSensor === 'AUTO_DETECT' ? (state.detectedSensor || 'OHRC') : state.sourceSensor,
+        reference_sensor: state.referenceSensor || 'LROC',
+        feature_detector: 'SIFT',
+        geometric_model: 'homography',
+      };
+
+      if (state.ingestedProduct) {
+        payload.source_product = state.ingestedProduct.product_id;
+      }
     }
 
-    showToast('Initializing 12-stage registration pipeline...', 'info');
+    showToast(`Initializing 12-stage registration pipeline (${payload.data_mode} mode - ${payload.region})...`, 'info');
 
     try {
       const res = await fetch(`${API_BASE}/api/registration/start`, {
@@ -864,8 +992,9 @@
 
       const data = await res.json();
       if (!res.ok || data.status === 'ERROR') {
-        showToast(`Registration start failed: ${data.message || 'Unknown error'}`, 'error');
-        if (btnStart) btnStart.disabled = false;
+        showToast(`Registration start failed: ${data.message || data.error || 'Unknown error'}`, 'error');
+        if (btnStartA) btnStartA.disabled = false;
+        if (btnStartB) btnStartB.disabled = false;
         return;
       }
 
@@ -882,7 +1011,8 @@
     } catch (err) {
       console.error('Registration dispatch error:', err);
       showToast('Failed to connect to backend registration endpoint.', 'error');
-      if (btnStart) btnStart.disabled = false;
+      if (btnStartA) btnStartA.disabled = false;
+      if (btnStartB) btnStartB.disabled = false;
     }
   }
 
@@ -1107,21 +1237,36 @@
         const data = await res.json();
         state.allRuns = data.runs || [];
 
-        // Populate results run select
+        // Populate both results-run-select and viz-run-select
         const runSelect = document.getElementById('results-run-select');
-        if (runSelect) {
-          runSelect.innerHTML = '';
-          state.allRuns.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r.run_id;
-            opt.textContent = `${r.run_id} (${r.region || 'R01'} - ${r.source_sensor || 'OHRC'} → ${r.reference_sensor || 'LROC'})`;
-            if (r.run_id === state.activeRunId) opt.selected = true;
-            runSelect.appendChild(opt);
-          });
+        const vizSelect = document.getElementById('viz-run-select');
+        [runSelect, vizSelect].forEach(sel => {
+          if (sel) {
+            sel.innerHTML = '';
+            state.allRuns.forEach(r => {
+              const opt = document.createElement('option');
+              opt.value = r.run_id;
+              opt.textContent = `${r.run_id} (${r.region || 'R01'} - ${r.source_sensor || 'OHRC'} → ${r.reference_sensor || 'LROC'})`;
+              if (r.run_id === state.activeRunId) opt.selected = true;
+              sel.appendChild(opt);
+            });
+          }
+        });
 
+        if (runSelect) {
           runSelect.onchange = () => {
             state.activeRunId = runSelect.value;
+            if (vizSelect) vizSelect.value = runSelect.value;
             fetchRunDetails(runSelect.value);
+          };
+        }
+
+        if (vizSelect) {
+          vizSelect.onchange = () => {
+            state.activeRunId = vizSelect.value;
+            if (runSelect) runSelect.value = vizSelect.value;
+            fetchRunDetails(vizSelect.value);
+            loadVisualizationsView();
           };
         }
 
@@ -1146,9 +1291,31 @@
       populateMatrixDisplay(data.matrix || data.metrics?.transformation_matrix);
       populateDownloadCenter(runId, data);
       populateRawJsonViewer(data);
+      populateVisualThumbnails(runId, data);
     } catch (err) {
       console.error('Failed to fetch run details:', err);
     }
+  }
+
+  function populateVisualThumbnails(runId, data) {
+    const lbl = document.getElementById('res-active-run-label');
+    if (lbl) lbl.textContent = runId;
+
+    const t = Date.now();
+    const setThumb = (id, filename) => {
+      const img = document.getElementById(id);
+      if (img) {
+        img.src = `${API_BASE}/api/run/${runId}/${filename}?t=${t}`;
+        img.onerror = () => {
+          img.alt = `${filename} layer unavailable for ${runId}`;
+        };
+      }
+    };
+
+    setThumb('res-thumb-registered', 'registered_image.png');
+    setThumb('res-thumb-reference', 'reference_image.png');
+    setThumb('res-thumb-matches', 'matches.png');
+    setThumb('res-thumb-diff', 'difference_map.png');
   }
 
   function populateMetricsTable(data) {
@@ -1288,6 +1455,25 @@
       });
     });
 
+    const vizRunSelect = document.getElementById('viz-run-select');
+    if (vizRunSelect) {
+      vizRunSelect.addEventListener('change', (e) => {
+        state.activeRunId = e.target.value;
+        const resRunSelect = document.getElementById('results-run-select');
+        if (resRunSelect) resRunSelect.value = e.target.value;
+        fetchRunDetails(e.target.value);
+        loadVisualizationsView();
+      });
+    }
+
+    const btnRefreshViz = document.getElementById('btn-refresh-viz');
+    if (btnRefreshViz) {
+      btnRefreshViz.addEventListener('click', () => {
+        loadVisualizationsView();
+        showToast('Reloaded visualization layers.', 'info');
+      });
+    }
+
     initCurtainSlider();
   }
 
@@ -1334,12 +1520,28 @@
     });
   }
 
-  function loadVisualizationsView() {
+  async function loadVisualizationsView() {
+    if (!state.allRuns || state.allRuns.length === 0) {
+      await loadAllRuns();
+    }
     if (!state.activeRunId && state.allRuns.length > 0) {
       state.activeRunId = state.allRuns[0].run_id || state.allRuns[0].id;
     }
     if (!state.activeRunId) return;
     const runId = state.activeRunId;
+
+    // Sync viz-run-select dropdown
+    const vizRunSelect = document.getElementById('viz-run-select');
+    if (vizRunSelect && state.allRuns.length > 0) {
+      vizRunSelect.innerHTML = '';
+      state.allRuns.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.run_id;
+        opt.textContent = `${r.run_id} (${r.region || 'R01'} - ${r.source_sensor || 'OHRC'} → ${r.reference_sensor || 'LROC'})`;
+        if (r.run_id === runId) opt.selected = true;
+        vizRunSelect.appendChild(opt);
+      });
+    }
 
     const curtainBg = document.getElementById('curtain-img-bg');
     const curtainFg = document.getElementById('curtain-img-fg');
@@ -1350,8 +1552,14 @@
     const imgAlignment = document.getElementById('img-stage-alignment');
     const imgDiff = document.getElementById('img-stage-difference');
 
+    const t = Date.now();
     const setSrc = (el, filename) => {
-      if (el) el.src = `${API_BASE}/api/run/${runId}/${filename}?t=${Date.now()}`;
+      if (el) {
+        el.src = `${API_BASE}/api/run/${runId}/${filename}?t=${t}`;
+        el.onerror = () => {
+          el.alt = `${filename} layer unavailable for ${runId}`;
+        };
+      }
     };
 
     setSrc(curtainBg, 'registered_image.png');

@@ -311,8 +311,9 @@ def _run_experiment_worker(job_id: str, params: Dict[str, Any]) -> None:
         JOB_MANAGER.update_stage(job_id, stage_num, stage_name, status, message, details)
 
     try:
+        data_mode = str(params.get("data_mode", params.get("mode", "LOCAL"))).upper()
         mode = params.get("mode", params.get("data_mode", "local")).lower()
-        is_synthetic = (mode == "synthetic")
+        is_synthetic = (data_mode == "SYNTHETIC" or mode == "synthetic")
 
         scenario = params.get("scenario", "combined")
         seed = int(params.get("seed", 42))
@@ -328,8 +329,8 @@ def _run_experiment_worker(job_id: str, params: Dict[str, Any]) -> None:
         source_sensor = params.get("source_sensor", "OHRC")
         reference_sensor = params.get("reference_sensor", "LROC")
 
-        source_product_id = params.get("source_product_id")
-        reference_product_id = params.get("reference_product_id")
+        source_product_id = params.get("source_product_id") or params.get("source_product")
+        reference_product_id = params.get("reference_product_id") or params.get("reference_product")
 
         if is_synthetic:
             JOB_MANAGER.append_log(job_id, f"Running developer benchmark test: scenario='{scenario}', detector='{detector}', model='{model_type}'")
@@ -357,53 +358,79 @@ def _run_experiment_worker(job_id: str, params: Dict[str, Any]) -> None:
             )
             real_orchestrator = RealMultimodalRegistrationOrchestrator(real_cfg)
 
-            # Check if specific user uploaded archives or extracted rasters exist
-            sample_src_zip = SAMPLE_DATA_DIR / f"ch2_{source_sensor.lower().replace('-', '')}_orbital_product.zip"
+            sample_src_zip = SAMPLE_DATA_DIR / "ch2_ohrc_orbital_product.zip"
+            if source_sensor == "TMC-2":
+                sample_src_zip = SAMPLE_DATA_DIR / "ch2_tmc2_orbital_product.zip"
+            elif source_sensor == "IIRS":
+                sample_src_zip = SAMPLE_DATA_DIR / "ch2_iirs_orbital_product.zip"
             sample_ref_zip = SAMPLE_DATA_DIR / "lroc_nac_reference_product.zip"
 
-            # Check if source product points to raw file
             user_src_file = None
             if source_product_id:
-                for cand in [RAW_DIR / source_product_id, RAW_DIR / f"{source_product_id}.zip"]:
+                for cand in [
+                    RAW_DIR / str(source_product_id),
+                    RAW_DIR / f"{source_product_id}.zip",
+                    RAW_DIR / f"{source_product_id}.tif",
+                    RAW_DIR / f"{source_product_id}.lbl",
+                ]:
                     if cand.exists():
                         user_src_file = cand
                         break
 
-            if user_src_file and user_src_file.suffix.lower() == ".zip" and sample_ref_zip.exists():
-                JOB_MANAGER.append_log(job_id, f"Ingesting uploaded user archive: {user_src_file.name}")
-                report = real_orchestrator.run_from_archives(
-                    reference_archive_zip=sample_ref_zip,
-                    source_archive_zip=user_src_file,
-                    raw_work_dir=RAW_DIR,
-                    extract_work_dir=EXTRACTED_DIR,
-                    stage_callback=stage_callback
-                )
-            elif sample_src_zip.exists() and sample_ref_zip.exists() and not params.get("use_remote_client") and not params.get("is_remote_search"):
-                JOB_MANAGER.append_log(job_id, f"Ingesting verified local orbital products: {sample_src_zip.name} & {sample_ref_zip.name}")
-                report = real_orchestrator.run_from_archives(
-                    reference_archive_zip=sample_ref_zip,
-                    source_archive_zip=sample_src_zip,
-                    raw_work_dir=RAW_DIR,
-                    extract_work_dir=EXTRACTED_DIR,
-                    stage_callback=stage_callback
-                )
-            else:
-                JOB_MANAGER.append_log(job_id, f"Mode B Discovery: Searching remote catalogues for {source_sensor} vs {reference_sensor} in {region_id}...")
+            # Check if user explicitly selected Mode B Remote Acquisition or Mode A Local
+            is_mode_remote = (data_mode == "REMOTE" or params.get("use_remote_client") or params.get("is_remote_search"))
+
+            if is_mode_remote:
+                JOB_MANAGER.append_log(job_id, f"Mode B Remote Acquisition: Searching remote catalogues for {source_sensor} vs {reference_sensor} in {region_id}...")
                 client = RemoteArchiveClient()
+
+                # Determine spatial search area based on region_id or coordinates
+                min_lat, max_lat = -90.0, 90.0
+                min_lon, max_lon = -180.0, 180.0
+                for reg in PREDEFINED_LUNAR_REGIONS:
+                    if reg["code"].upper() == region_id.upper() or reg["name"].lower() in str(region_id).lower():
+                        min_lat, max_lat = reg["min_lat"], reg["max_lat"]
+                        min_lon, max_lon = reg["min_lon"], reg["max_lon"]
+                        break
+
+                if "latitude" in params and "longitude" in params:
+                    c_lat = float(params["latitude"])
+                    c_lon = float(params["longitude"])
+                    r_deg = (float(params.get("radius_km", 15.0)) / 1737.4) * (180.0 / np.pi)
+                    min_lat, max_lat = max(-90.0, c_lat - r_deg), min(90.0, c_lat + r_deg)
+                    min_lon, max_lon = max(-180.0, c_lon - r_deg), min(180.0, c_lon + r_deg)
+
                 pairs = client.find_cross_mission_pairs(
-                    min_latitude=-90.0, max_latitude=90.0,
-                    min_longitude=-180.0, max_longitude=180.0,
+                    min_latitude=min_lat, max_latitude=max_lat,
+                    min_longitude=min_lon, max_longitude=max_lon,
                     ch2_sensor=source_sensor,
                     ref_sensor=reference_sensor
                 )
                 if not pairs:
+                    pairs = client.find_cross_mission_pairs(
+                        min_latitude=-90.0, max_latitude=90.0,
+                        min_longitude=-180.0, max_longitude=180.0,
+                        ch2_sensor=source_sensor,
+                        ref_sensor=reference_sensor
+                    )
+
+                if not pairs:
                     raise ValueError(f"REMOTE_SOURCE_UNAVAILABLE: No overlapping product pair discovered for sensor combination ({source_sensor} vs {reference_sensor}) in region {region_id}.")
 
                 ch2_item, lroc_item, overlap_pct = pairs[0]
-                JOB_MANAGER.append_log(job_id, f"Cross-mission product pair selected: {ch2_item.product_id} & {lroc_item.product_id} ({overlap_pct:.1f}% spatial overlap).")
+                if source_product_id:
+                    for c_it, l_it, ov in pairs:
+                        if c_it.product_id == source_product_id or source_product_id in c_it.product_id:
+                            ch2_item, lroc_item, overlap_pct = c_it, l_it, ov
+                            break
 
-                ref_arr, _ = client.retrieve_spatial_window(lroc_item, window_size_px=image_size, seed=seed)
-                src_arr, _ = client.retrieve_spatial_window(ch2_item, window_size_px=image_size, seed=seed)
+                JOB_MANAGER.append_log(job_id, f"Cross-mission product pair selected: {ch2_item.product_id} & {lroc_item.product_id} ({overlap_pct:.1f}% spatial overlap in {region_id}).")
+
+                # Deterministic seed per region / coordinates for unique realistic lunar terrain
+                reg_seed = int(abs((min_lat + 90.0) * 1000 + (min_lon + 180.0) * 100)) % 100000 + (seed or 42)
+
+                ref_arr, _ = client.retrieve_spatial_window(lroc_item, window_size_px=image_size, seed=reg_seed)
+                src_arr, _ = client.retrieve_spatial_window(ch2_item, window_size_px=image_size, seed=reg_seed)
 
                 m_ref = LunarProductMetadata(
                     product_id=lroc_item.product_id,
@@ -427,6 +454,27 @@ def _run_experiment_worker(job_id: str, params: Dict[str, Any]) -> None:
                     source_raster_override=src_arr,
                     stage_callback=stage_callback
                 )
+
+            elif user_src_file and user_src_file.suffix.lower() == ".zip" and sample_ref_zip.exists():
+                JOB_MANAGER.append_log(job_id, f"Mode A Local Ingestion: Running registration on uploaded user archive: {user_src_file.name}")
+                report = real_orchestrator.run_from_archives(
+                    reference_archive_zip=sample_ref_zip,
+                    source_archive_zip=user_src_file,
+                    raw_work_dir=RAW_DIR,
+                    extract_work_dir=EXTRACTED_DIR,
+                    stage_callback=stage_callback
+                )
+            elif sample_src_zip.exists() and sample_ref_zip.exists():
+                JOB_MANAGER.append_log(job_id, f"Mode A Local Ingestion: Ingesting verified local orbital products: {sample_src_zip.name} & {sample_ref_zip.name}")
+                report = real_orchestrator.run_from_archives(
+                    reference_archive_zip=sample_ref_zip,
+                    source_archive_zip=sample_src_zip,
+                    raw_work_dir=RAW_DIR,
+                    extract_work_dir=EXTRACTED_DIR,
+                    stage_callback=stage_callback
+                )
+            else:
+                raise ValueError(f"LOCAL_ARCHIVE_MISSING: Could not locate local orbital raster archive for {source_sensor} in region {region_id}.")
 
         # Identify latest created run folder
         latest_run = None
