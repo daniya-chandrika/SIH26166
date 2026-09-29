@@ -538,45 +538,61 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, directory=str(FRONTEND_DIR), **kwargs)
 
+    def do_OPTIONS(self) -> None:
+        """Handle CORS preflight requests."""
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept")
+        self.send_header("Access-Control-Max-Age", "86400")
+        self.end_headers()
+
     def do_GET(self) -> None:
         parsed_url = urlparse(self.path)
         path = parsed_url.path
         query = parse_qs(parsed_url.query)
 
-        if path == "/api/health":
+        # Normalize /api/v1/ prefix to unified /api/ routing
+        norm_path = path
+        if norm_path.startswith("/api/v1/"):
+            norm_path = "/api/" + norm_path[len("/api/v1/"):]
+
+        if norm_path == "/api/health":
             self._handle_get_health()
-        elif path == "/api/summary":
+        elif norm_path == "/api/summary":
             self._handle_get_summary()
-        elif path == "/api/runs":
+        elif norm_path == "/api/runs":
             self._handle_list_runs()
-        elif path == "/api/benchmarks":
+        elif norm_path == "/api/benchmarks":
             self._handle_get_benchmarks()
-        elif path == "/api/regions":
+        elif norm_path in ["/api/regions", "/api/data/regions"]:
             self._handle_get_regions()
-        elif path == "/api/products":
+        elif norm_path in ["/api/sensors", "/api/data/sensors"]:
+            self._handle_get_sensors()
+        elif norm_path in ["/api/products", "/api/data/products"]:
             self._handle_get_products(query)
-        elif path.startswith("/api/products/"):
-            sub_prod = path[len("/api/products/"):]
+        elif norm_path.startswith("/api/products/"):
+            sub_prod = norm_path[len("/api/products/"):]
             if sub_prod in ["pairs", "candidates"]:
                 self._handle_get_candidate_pairs(query)
             else:
                 self._handle_get_product_by_id(sub_prod)
-        elif path == "/api/sensor-matrix":
+        elif norm_path in ["/api/sensor-matrix", "/api/data/sensor-matrix"]:
             self._handle_get_sensor_matrix(query)
-        elif path in ["/api/remote/search", "/api/data/remote/search"]:
+        elif norm_path in ["/api/remote/search", "/api/data/remote/search"]:
             self._handle_get_remote_search(query)
-        elif path == "/api/control-points":
+        elif norm_path == "/api/control-points":
             self._handle_get_control_points(query)
-        elif path == "/api/compare":
+        elif norm_path == "/api/compare":
             self._handle_get_compare(query)
-        elif path == "/api/jobs/active":
+        elif norm_path == "/api/jobs/active":
             self._handle_get_active_jobs()
-        elif path.startswith("/api/jobs/") or path.startswith("/api/registration/"):
+        elif norm_path.startswith("/api/jobs/") or norm_path.startswith("/api/registration/"):
             # Normalize job status and stages endpoints
-            if path.startswith("/api/jobs/"):
-                subpath = path[len("/api/jobs/"):]
+            if norm_path.startswith("/api/jobs/"):
+                subpath = norm_path[len("/api/jobs/"):]
             else:
-                subpath = path[len("/api/registration/"):]
+                subpath = norm_path[len("/api/registration/"):]
 
             if subpath.endswith("/stages"):
                 job_id = subpath[:-len("/stages")]
@@ -586,11 +602,11 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                 self._handle_get_job(job_id)
             else:
                 self._handle_get_job(subpath)
-        elif path.startswith("/api/run/") or path.startswith("/api/results/"):
-            if path.startswith("/api/run/"):
-                subpath = path[len("/api/run/"):]
+        elif norm_path.startswith("/api/run/") or norm_path.startswith("/api/results/"):
+            if norm_path.startswith("/api/run/"):
+                subpath = norm_path[len("/api/run/"):]
             else:
-                subpath = path[len("/api/results/"):]
+                subpath = norm_path[len("/api/results/"):]
 
             if subpath.endswith("/details"):
                 run_id = subpath[:-len("/details")]
@@ -614,7 +630,7 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                 self._handle_download_run_artifact(run_id, artifact_name)
             else:
                 self._handle_get_run_file(subpath)
-        elif path == "/api/scenarios":
+        elif norm_path == "/api/scenarios":
             self._handle_get_scenarios()
         else:
             # Serve static frontend files
@@ -624,19 +640,23 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
         parsed_url = urlparse(self.path)
         path = parsed_url.path
 
-        if path in ["/api/ingestion/upload", "/api/upload", "/api/data/local/upload"]:
+        norm_path = path
+        if norm_path.startswith("/api/v1/"):
+            norm_path = "/api/" + norm_path[len("/api/v1/"):]
+
+        if norm_path in ["/api/ingestion/upload", "/api/upload", "/api/data/local/upload"]:
             self._handle_post_upload()
-        elif path in ["/api/regions/search", "/api/regions/coordinates"]:
+        elif norm_path in ["/api/regions/search", "/api/regions/coordinates"]:
             self._handle_post_regions_search()
-        elif path in ["/api/remote/search", "/api/data/remote/search"]:
+        elif norm_path in ["/api/remote/search", "/api/data/remote/search"]:
             self._handle_post_remote_search()
-        elif path in ["/api/remote/cache", "/api/data/remote/cache", "/api/data/remote/select", "/api/remote/select"]:
+        elif norm_path in ["/api/remote/cache", "/api/data/remote/cache", "/api/data/remote/select", "/api/remote/select"]:
             self._handle_post_remote_cache()
-        elif path in ["/api/trigger", "/api/registration/multimodal", "/api/registration/start"]:
+        elif norm_path in ["/api/trigger", "/api/registration/multimodal", "/api/registration/start", "/api/register"]:
             self._handle_trigger_run()
-        elif path == "/api/control-points":
+        elif norm_path == "/api/control-points":
             self._handle_post_control_points()
-        elif path == "/api/benchmark/run":
+        elif norm_path in ["/api/benchmark/run", "/api/benchmarks/run"]:
             self._handle_trigger_benchmark()
         else:
             self.send_error(HTTPStatus.NOT_FOUND, "Endpoint not found")
@@ -648,8 +668,20 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
         self.end_headers()
         self.wfile.write(content)
+
+    def _handle_get_sensors(self) -> None:
+        """Return list of supported lunar sensors and properties."""
+        sensors = [
+            {"sensor": "OHRC", "mission": "Chandrayaan-2", "gsd_m": 0.25, "type": "High-Resolution Optical", "bands": 1, "description": "Orbiter High Resolution Camera (0.25m GSD)"},
+            {"sensor": "TMC-2", "mission": "Chandrayaan-2", "gsd_m": 5.0, "type": "Terrain Stereo Camera", "bands": 3, "description": "Terrain Mapping Camera-2 (5m GSD stereo triplet)"},
+            {"sensor": "IIRS", "mission": "Chandrayaan-2", "gsd_m": 20.0, "type": "Hyperspectral Infrared", "bands": 256, "description": "Imaging Infrared Spectrometer (20m GSD, 0.8-5.0 um)"},
+            {"sensor": "LROC", "mission": "LRO", "gsd_m": 0.50, "type": "Narrow Angle Camera", "bands": 1, "description": "NASA Lunar Reconnaissance Orbiter Camera NAC (0.5m GSD)"},
+        ]
+        self._send_json({"sensors": sensors, "total": len(sensors)})
 
     def _handle_get_health(self) -> None:
         """Returns verified real backend health and operating state."""
