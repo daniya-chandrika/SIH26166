@@ -158,16 +158,75 @@
     }
   }
 
+  function isMobileView() {
+    return window.innerWidth <= 900;
+  }
+
   function initSidebar() {
     const savedState = localStorage.getItem('sih_sidebar_collapsed') === 'true';
-    setSidebarCollapsed(savedState);
+    if (!isMobileView()) {
+      setSidebarCollapsed(savedState);
+    } else {
+      closeMobileSidebar();
+    }
 
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
     if (btnToggleSidebar) {
       btnToggleSidebar.addEventListener('click', () => {
-        setSidebarCollapsed(!state.sidebarCollapsed);
+        if (isMobileView()) {
+          toggleMobileSidebar();
+        } else {
+          setSidebarCollapsed(!state.sidebarCollapsed);
+        }
       });
     }
+
+    const btnCloseSidebar = document.getElementById('btn-sidebar-close');
+    if (btnCloseSidebar) {
+      btnCloseSidebar.addEventListener('click', () => {
+        closeMobileSidebar();
+      });
+    }
+
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', () => {
+        closeMobileSidebar();
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (!isMobileView()) {
+        closeMobileSidebar();
+        setSidebarCollapsed(state.sidebarCollapsed);
+      }
+    });
+  }
+
+  function toggleMobileSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const isOpen = sidebar && sidebar.classList.contains('mobile-open');
+    if (isOpen) {
+      closeMobileSidebar();
+    } else {
+      openMobileSidebar();
+    }
+  }
+
+  function openMobileSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.add('mobile-open');
+    if (backdrop) backdrop.classList.add('active');
+    document.body.classList.add('drawer-open');
+  }
+
+  function closeMobileSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('drawer-open');
   }
 
   function setSidebarCollapsed(collapsed) {
@@ -198,6 +257,11 @@
 
   function switchView(viewId) {
     state.currentView = viewId;
+
+    // Automatically close mobile sidebar when a navigation item is tapped
+    if (isMobileView()) {
+      closeMobileSidebar();
+    }
     
     // Update nav items
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -216,6 +280,8 @@
     const targetPanel = document.getElementById(`view-${viewId}`);
     if (targetPanel) {
       targetPanel.classList.add('active');
+      const workspace = document.getElementById('main-workspace');
+      if (workspace) workspace.scrollTop = 0;
     }
 
     // Specific panel view loaders
@@ -1496,27 +1562,44 @@
 
     let isDragging = false;
 
-    function moveDivider(x) {
+    function moveDivider(clientX) {
       const rect = container.getBoundingClientRect();
-      let pos = (x - rect.left) / rect.width;
+      if (rect.width <= 0) return;
+      let pos = (clientX - rect.left) / rect.width;
       pos = Math.max(0.01, Math.min(0.99, pos));
       overlay.style.width = `${pos * 100}%`;
       divider.style.left = `${pos * 100}%`;
     }
 
-    divider.addEventListener('mousedown', () => isDragging = true);
-    window.addEventListener('mouseup', () => isDragging = false);
+    divider.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      e.preventDefault();
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
     window.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
       moveDivider(e.clientX);
     });
 
-    // Touch support
-    divider.addEventListener('touchstart', () => isDragging = true);
-    window.addEventListener('touchend', () => isDragging = false);
+    // Touch support for mobile & tablet screens
+    divider.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      if (e.touches && e.touches[0]) {
+        moveDivider(e.touches[0].clientX);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => { isDragging = false; }, { passive: true });
+    window.addEventListener('touchcancel', () => { isDragging = false; }, { passive: true });
     window.addEventListener('touchmove', (e) => {
-      if (!isDragging || !e.touches[0]) return;
+      if (!isDragging || !e.touches || !e.touches[0]) return;
       moveDivider(e.touches[0].clientX);
+    }, { passive: true });
+
+    // Tap/Click on container to position divider immediately
+    container.addEventListener('click', (e) => {
+      if (e.target === divider || divider.contains(e.target)) return;
+      moveDivider(e.clientX);
     });
   }
 
