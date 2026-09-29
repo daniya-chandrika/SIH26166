@@ -17,6 +17,7 @@ from ingestion.models import SensorType
 from ingestion.remote_archive import RemoteArchiveClient, RemoteArchiveSearchQuery
 from evaluation.control_points import ControlPointManager, ControlPoint, ControlPointType
 from experiments.benchmark import LunarRegistrationBenchmarkRunner
+from metadata.models import LunarProductMetadata
 
 router = APIRouter(prefix="/api/v1", tags=["Lunar Registration API"])
 
