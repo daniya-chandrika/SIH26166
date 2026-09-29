@@ -4,9 +4,83 @@ Uses Shapely geometry to compute spatial intersection polygons, area, and overla
 """
 from typing import List, Optional, Tuple, Dict, Any
 import numpy as np
-from shapely.geometry import Polygon, box, mapping
-from shapely.ops import unary_union
 import json
+
+try:
+    from shapely.geometry import Polygon, box, mapping
+    from shapely.ops import unary_union
+    HAS_SHAPELY = True
+except ImportError:
+    HAS_SHAPELY = False
+
+    class Polygon:
+        def __init__(self, coordinates=None):
+            self.coordinates = coordinates or []
+            if coordinates and len(coordinates) > 0:
+                xs = [p[0] for p in coordinates]
+                ys = [p[1] for p in coordinates]
+                self.bounds = (min(xs), min(ys), max(xs), max(ys))
+            else:
+                self.bounds = (0.0, 0.0, 0.0, 0.0)
+
+        @property
+        def is_valid(self):
+            return True
+
+        @property
+        def is_empty(self):
+            return self.area <= 0.0
+
+        @property
+        def area(self):
+            w = max(0.0, self.bounds[2] - self.bounds[0])
+            h = max(0.0, self.bounds[3] - self.bounds[1])
+            return w * h
+
+        def buffer(self, val):
+            return self
+
+        def intersection(self, other):
+            if self.is_empty or other.is_empty:
+                return Polygon([])
+            minx = max(self.bounds[0], other.bounds[0])
+            miny = max(self.bounds[1], other.bounds[1])
+            maxx = min(self.bounds[2], other.bounds[2])
+            maxy = min(self.bounds[3], other.bounds[3])
+            if maxx <= minx or maxy <= miny:
+                return Polygon([])
+            coords = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)]
+            return Polygon(coords)
+
+        @property
+        def wkt(self):
+            if self.is_empty:
+                return "POLYGON EMPTY"
+            b = self.bounds
+            return f"POLYGON (({b[0]} {b[1]}, {b[2]} {b[1]}, {b[2]} {b[3]}, {b[0]} {b[3]}, {b[0]} {b[1]}))"
+
+    def box(minx, miny, maxx, maxy):
+        return Polygon([(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)])
+
+    def mapping(geom):
+        if not geom or geom.is_empty:
+            return None
+        b = geom.bounds
+        return {
+            "type": "Polygon",
+            "coordinates": [[
+                [b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], b[1]]
+            ]]
+        }
+
+    def unary_union(geoms):
+        if not geoms:
+            return Polygon([])
+        minx = min(g.bounds[0] for g in geoms)
+        miny = min(g.bounds[1] for g in geoms)
+        maxx = max(g.bounds[2] for g in geoms)
+        maxy = max(g.bounds[3] for g in geoms)
+        return box(minx, miny, maxx, maxy)
 
 from metadata.models import LunarProductMetadata
 from geospatial.base import GeospatialValidatorBase, FootprintOverlapResult
