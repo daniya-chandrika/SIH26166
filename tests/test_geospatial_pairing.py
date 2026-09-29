@@ -3,8 +3,10 @@ Unit and Integration Tests for Geospatial Footprint & Terrain Suitability Engine
 """
 import unittest
 import numpy as np
+from shapely.geometry import Polygon
+
 from metadata.models import LunarProductMetadata
-from geospatial.overlap import GeospatialFootprintValidator, Polygon
+from geospatial.overlap import GeospatialFootprintValidator
 from geospatial.terrain import TerrainSuitabilityEvaluator
 
 

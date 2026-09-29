@@ -5,8 +5,10 @@ Coordinates local ingested products and remote orbital catalogs across lunar coo
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Any, Optional, Tuple, Union
 import numpy as np
+from shapely.geometry import Polygon, box, mapping
+
 from metadata.models import LunarProductMetadata
-from geospatial.overlap import GeospatialFootprintValidator, Polygon, box, mapping
+from geospatial.overlap import GeospatialFootprintValidator
 from geospatial.terrain import TerrainSuitabilityEvaluator
 
 

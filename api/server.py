@@ -32,9 +32,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API Router at both /api and /api/v1 prefixes for universal client compatibility
-app.include_router(api_router, prefix="/api")
+# Include API Router at both /api/v1 and /api prefixes for universal client compatibility
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api")
 
 
 # Serve Frontend Web Dashboard & Assets
